@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
+import Navbar from "@/components/layout/Navbar";
+import { PiProvider } from "@/context/PiContext";
+import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,7 +31,22 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head>
+        <Script
+          src="https://sdk.minepi.com/pi-sdk.js"
+          strategy="beforeInteractive"
+        />
+      </head>
+      <body className="min-h-full flex flex-col bg-black">
+        <AuthProvider>
+          <PiProvider>
+            <Navbar />
+            <main className="pt-16 sm:pt-20">
+              {children}
+            </main>
+          </PiProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }

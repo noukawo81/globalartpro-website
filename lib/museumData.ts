@@ -1,0 +1,228 @@
+import { GallerySection, MuseumArtwork } from '@/types/museum';
+
+const africaArtworks: MuseumArtwork[] = [
+  {
+    id: 'af-1',
+    title: 'Masque Baoulé',
+    artist: 'Atelier Traditionnel',
+    region: 'Afrique',
+    culturalOrigin: 'Côte d\'Ivoire',
+    image: 'https://images.unsplash.com/photo-1578321271328-b4da59f7e3f3?w=600&h=600&fit=crop',
+    description: 'Masque traditionnel du peuple Baoulé, symbole de sagesse et de connexion ancestrale.',
+    year: 1950,
+    medium: 'Bois sculpté',
+  },
+  {
+    id: 'af-2',
+    title: 'Poterie Zoulou',
+    artist: 'Nomusa Dlamini',
+    region: 'Afrique',
+    culturalOrigin: 'Afrique du Sud',
+    image: 'https://images.unsplash.com/photo-1578320424326-a12b8a7ac36f?w=600&h=600&fit=crop',
+    description: 'Poterie traditionnelle zoulou, résultat de générations de savoir-faire.',
+    medium: 'Céramique artisanale',
+  },
+  {
+    id: 'af-3',
+    title: 'Textile Kente',
+    artist: 'Abena Asare',
+    region: 'Afrique',
+    culturalOrigin: 'Ghana',
+    image: 'https://images.unsplash.com/photo-1579783902614-e3fb5141b0cb?w=600&h=600&fit=crop',
+    description: 'Tissu Kente tissé à la main, symbole de prestige et d\'identité culturelle.',
+    year: 2020,
+    medium: 'Soie et coton',
+  },
+];
+
+const asiaArtworks: MuseumArtwork[] = [
+  {
+    id: 'as-1',
+    title: 'Calligraphie Tang',
+    artist: 'Wang Ming',
+    region: 'Asie',
+    culturalOrigin: 'Chine',
+    image: 'https://images.unsplash.com/photo-1577720614519-1e82a8be2803?w=600&h=600&fit=crop',
+    description: 'Calligraphie encre traditionnelle capturant l\'essence du moment présent.',
+    year: 2021,
+    medium: 'Encre sur papier',
+  },
+  {
+    id: 'as-2',
+    title: 'Ukiyo-e Moderne',
+    artist: 'Takeshi Yamamoto',
+    region: 'Asie',
+    culturalOrigin: 'Japon',
+    image: 'https://images.unsplash.com/photo-1578301978162-7667c6c31e59?w=600&h=600&fit=crop',
+    description: 'Gravure japonaise contemporaine revisitant les traditions Edo.',
+    year: 2022,
+    medium: 'Bois gravé et encre',
+  },
+  {
+    id: 'as-3',
+    title: 'Sculpture Khmer',
+    artist: 'Soksam Khuon',
+    region: 'Asie',
+    culturalOrigin: 'Cambodge',
+    image: 'https://images.unsplash.com/photo-1578323834218-f965fb3ac84d?w=600&h=600&fit=crop',
+    description: 'Sculpture inspirée par les temples d\'Angkor, réinterprétée en art contemporain.',
+    year: 2023,
+    medium: 'Résine et or',
+  },
+];
+
+const europeArtworks: MuseumArtwork[] = [
+  {
+    id: 'eu-1',
+    title: 'Iconographie Byzantine',
+    artist: 'Yiannis Metallinos',
+    region: 'Europe',
+    culturalOrigin: 'Grèce',
+    image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&h=600&fit=crop',
+    description: 'Icône byzantine contemporaine, fusion de spiritualité et modernité.',
+    year: 2020,
+    medium: 'Tempéra et or sur bois',
+  },
+  {
+    id: 'eu-2',
+    title: 'Azulejos Portuguais',
+    artist: 'Graça Pereira',
+    region: 'Europe',
+    culturalOrigin: 'Portugal',
+    image: 'https://images.unsplash.com/photo-1604871000636-074fa5117945?w=600&h=600&fit=crop',
+    description: 'Carreaux peints revisitant la tradition des azulejos portugais.',
+    year: 2021,
+    medium: 'Céramique peinte',
+  },
+  {
+    id: 'eu-3',
+    title: 'Joaillerie Celtique',
+    artist: 'Síle O\'Murchu',
+    region: 'Europe',
+    culturalOrigin: 'Irlande',
+    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&h=600&fit=crop',
+    description: 'Bijoux contemporains inspirés par les motifs celtes anciens.',
+    year: 2023,
+    medium: 'Argent et or',
+  },
+];
+
+const americaArtworks: MuseumArtwork[] = [
+  {
+    id: 'am-1',
+    title: 'Art Navajo Contemp.',
+    artist: 'Diné Yazzie',
+    region: 'Amérique',
+    culturalOrigin: 'États-Unis',
+    image: 'https://images.unsplash.com/photo-1579783902614-e3fb5141b0cb?w=600&h=600&fit=crop',
+    description: 'Tapisserie navajo mêlant motifs traditionnels et esthétique contemporaine.',
+    year: 2022,
+    medium: 'Laine tissée',
+  },
+  {
+    id: 'am-2',
+    title: 'Muralisme Urbain',
+    artist: 'Isabel Romero',
+    region: 'Amérique',
+    culturalOrigin: 'Mexique',
+    image: 'https://images.unsplash.com/photo-1578301978162-7667c6c31e59?w=600&h=600&fit=crop',
+    description: 'Fresque muraliste célébrant l\'héritage précolombien.',
+    year: 2023,
+    medium: 'Peinture acrylique',
+  },
+  {
+    id: 'am-3',
+    title: 'Céramique Inca',
+    artist: 'Quechua Collective',
+    region: 'Amérique',
+    culturalOrigin: 'Pérou',
+    image: 'https://images.unsplash.com/photo-1578320424326-a12b8a7ac36f?w=600&h=600&fit=crop',
+    description: 'Poterie inspirée par la civilisation Inca, créée par des artisans péruviens.',
+    year: 2021,
+    medium: 'Céramique artisanale',
+  },
+];
+
+const oceaniaArtworks: MuseumArtwork[] = [
+  {
+    id: 'oc-1',
+    title: 'Art Aborigène',
+    artist: 'Tjumpo Tjapanangka',
+    region: 'Océanie',
+    culturalOrigin: 'Australie',
+    image: 'https://images.unsplash.com/photo-1577720614519-1e82a8be2803?w=600&h=600&fit=crop',
+    description: 'Peinture aboriginal racontant le Rêve, spiritualité ancestrale.',
+    year: 2020,
+    medium: 'Pigments naturels sur toile',
+  },
+  {
+    id: 'oc-2',
+    title: 'Sculpture Maori',
+    artist: 'Toby Heke',
+    region: 'Océanie',
+    culturalOrigin: 'Nouvelle-Zélande',
+    image: 'https://images.unsplash.com/photo-1578323834218-f965fb3ac84d?w=600&h=600&fit=crop',
+    description: 'Sculpture Maori contemporaine, hommage aux ancêtres.',
+    year: 2022,
+    medium: 'Bois de kauri',
+  },
+  {
+    id: 'oc-3',
+    title: 'Tapa Polynésienne',
+    artist: 'Moana Tuitua',
+    region: 'Océanie',
+    culturalOrigin: 'Samoa',
+    image: 'https://images.unsplash.com/photo-1579783902614-e3fb5141b0cb?w=600&h=600&fit=crop',
+    description: 'Motifs tapa traditionnels polynésiens, patrimoine vivant.',
+    year: 2023,
+    medium: 'Écorce battue et pigments',
+  },
+];
+
+export const gallerySections: GallerySection[] = [
+  {
+    region: 'Afrique',
+    title: 'Salle Africaine',
+    description:
+      'Découvrez la richesse des traditions africaines, de la sculpture sacrée aux textiles colorés.',
+    icon: '🌍',
+    ambiance: 'Ambiance chaleureuse, rythmes ancestraux',
+    artworks: africaArtworks,
+  },
+  {
+    region: 'Asie',
+    title: 'Salle Asiatique',
+    description:
+      'Un voyage à travers les philosophies orientales, de la calligraphie zen à la sculpture sacrée.',
+    icon: '🏯',
+    ambiance: 'Sérénité méditative, harmonie',
+    artworks: asiaArtworks,
+  },
+  {
+    region: 'Europe',
+    title: 'Salle Européenne',
+    description:
+      'Explorez le patrimoine européen, de l\'iconographie byzantine aux traditions régionales.',
+    icon: '⚜️',
+    ambiance: 'Élégance intemporelle, raffinement',
+    artworks: europeArtworks,
+  },
+  {
+    region: 'Amérique',
+    title: 'Salle Américaine',
+    description:
+      'L\'art des Amériques, du muralisme urbain aux traditions précolombienne revisitées.',
+    icon: '🗽',
+    ambiance: 'Énergie dynamique, créativité débordante',
+    artworks: americaArtworks,
+  },
+  {
+    region: 'Océanie',
+    title: 'Salle Océanienne',
+    description:
+      'L\'esprit du Pacifique, de l\'art aborigène australien aux traditions polynésiennes.',
+    icon: '🏝️',
+    ambiance: 'Sérénité océanique, connexion naturelle',
+    artworks: oceaniaArtworks,
+  },
+];
