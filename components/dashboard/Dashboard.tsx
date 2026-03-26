@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
@@ -56,6 +57,45 @@ export default function Dashboard() {
               </motion.div>
             ))}
           </div>
+
+          {/* ARTC Balance Card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="mt-6 bg-gradient-to-r from-purple-600/20 to-purple-600/5 border border-purple-500/30 rounded-lg p-6"
+          >
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <Image
+                  src="/logos/artc.svg"
+                  alt="ARTC Token"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 md:w-14 md:h-14 object-contain"
+                />
+                <div>
+                  <p className="text-gray-400 text-sm">Solde ARTC</p>
+                  <p className="text-2xl md:text-3xl font-bold">{user?.artcBalance || 0} ARTC</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-400 mt-2 max-w-md">
+                <span className="text-blue-400 font-medium">ARTC</span> est le token utilitaire de GlobalArtpro. Il récompense votre activité et vous connecte à l'écosystème artistique et communautaire.
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Gagnez des ARTC en invitant des utilisateurs et en participant à la plateforme.
+              </p>
+              <Link href="/wallet">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-semibold transition-all"
+                >
+                  Gérer
+                </motion.button>
+              </Link>
+            </div>
+          </motion.div>
         </div>
       </section>
 

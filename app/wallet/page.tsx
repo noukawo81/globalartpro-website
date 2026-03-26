@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -169,12 +170,23 @@ export default function WalletPage() {
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-gold-500 to-yellow-500 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">🎨</span>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center">
+                  <Image
+                    src="/logos/artc.svg"
+                    alt="ARTC Token"
+                    width={48}
+                    height={48}
+                    className="object-contain"
+                  />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-gold-400">ARTC</h3>
-                  <p className="text-sm text-gray-400">Token Artistique</p>
+                  <h3 className="text-xl font-semibold text-gold-400">ARTC Token</h3>
+                  <p className="text-sm text-gray-400 mt-1">
+                    <span className="text-blue-400 font-medium">ARTC</span> récompense votre activité et vous connecte à l'écosystème GlobalArtpro.
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Gagnez des ARTC en invitant des utilisateurs et en participant à la plateforme.
+                  </p>
                 </div>
               </div>
             </div>

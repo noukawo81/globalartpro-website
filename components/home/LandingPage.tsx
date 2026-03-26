@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -17,6 +18,20 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-transparent opacity-40" />
 
         <div className="relative z-10 max-w-4xl text-center">
+          <motion.div
+            {...fadeInUp}
+            className="mb-6 flex justify-center"
+          >
+            <Image
+              src="/logos/globalartpro.jpeg"
+              alt="GlobalArtpro"
+              width={120}
+              height={120}
+              className="w-24 h-24 md:w-32 md:h-32 object-contain"
+              priority
+            />
+          </motion.div>
+
           <motion.h1
             {...fadeInUp}
             className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6"

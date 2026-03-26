@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -82,8 +83,16 @@ export default function Navbar() {
                 href="/"
                 className="flex items-center gap-2"
               >
-                <span className="text-xl sm:text-2xl font-bold text-white">
-                  Global<span className="text-blue-500">Art</span>pro
+                <Image
+                  src="/logos/globalartpro.jpeg"
+                  alt="GlobalArtpro"
+                  width={40}
+                  height={40}
+                  className="object-contain w-8 h-8 md:w-10 md:h-10"
+                  priority
+                />
+                <span className="text-lg md:text-xl font-bold text-white hidden sm:inline">
+                  GlobalArtpro
                 </span>
               </Link>
             </motion.div>
@@ -145,11 +154,11 @@ export default function Navbar() {
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
                     <span className="text-blue-200 text-sm font-medium">{authUser?.username}</span>
                   </div>
-                  <Link href="/checkout">
+                  <Link href="/foundation/donate">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="px-4 py-2 text-white text-sm font-bold rounded-lg bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 transition-all shadow-lg"
+                      className="px-4 py-2 text-white text-sm font-bold rounded-lg bg-blue-600 hover:bg-blue-500 transition-all shadow-lg"
                     >
                       💙 Don
                     </motion.button>
