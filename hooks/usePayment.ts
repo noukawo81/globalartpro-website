@@ -5,7 +5,7 @@ import { useState, useCallback } from 'react';
 // Types pour le système de paiement
 export interface PaymentData {
   amount: number;
-  currency: 'ARTC' | 'Pi' | 'USD';
+  currency: 'ARTC' | 'Pi' | 'USD' | 'USDT';
   method: 'card' | 'mobile' | 'artc' | 'pi';
   itemId: string;
   itemTitle: string;

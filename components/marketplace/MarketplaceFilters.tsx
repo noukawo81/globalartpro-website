@@ -87,8 +87,8 @@ export default function MarketplaceFilters({
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 (filters.category === '' && cat === 'Tous') ||
                 filters.category === cat
-                  ? 'bg-gradient-to-r from-yellow-400 to-yellow-300 text-black shadow-lg shadow-yellow-500/30'
-                  : 'bg-gray-800/50 border border-gray-700/50 text-gray-300 hover:border-yellow-500/50 hover:text-white'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30'
+                  : 'bg-gray-800/50 border border-gray-700/50 text-gray-300 hover:border-blue-500/50 hover:text-white'
               }`}
             >
               {cat}
@@ -115,8 +115,8 @@ export default function MarketplaceFilters({
               }
               className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
                 filters.certified === option.value
-                  ? 'bg-gradient-to-r from-yellow-400 to-yellow-300 text-black shadow-lg shadow-yellow-500/30'
-                  : 'bg-gray-800/50 border border-gray-700/50 text-gray-300 hover:border-yellow-500/50 hover:text-white'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30'
+                  : 'bg-gray-800/50 border border-gray-700/50 text-gray-300 hover:border-blue-500/50 hover:text-white'
               }`}
             >
               {option.label}
@@ -139,7 +139,7 @@ export default function MarketplaceFilters({
                   .value as 'newest' | 'popular' | 'pricelow' | 'pricehigh'
               )
             }
-            className="w-full px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50 text-gray-300 text-sm focus:outline-none focus:border-yellow-500/50 focus:ring-1 focus:ring-yellow-500/30 appearance-none cursor-pointer transition-all duration-200"
+            className="w-full px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50 text-gray-300 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 appearance-none cursor-pointer transition-all duration-200"
           >
             {sortOptions.map((option) => (
               <option

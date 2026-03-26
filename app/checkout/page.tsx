@@ -22,7 +22,7 @@ interface CheckoutItem {
   title: string;
   image: string;
   price: number;
-  currency: 'ARTC' | 'Pi' | 'USD';
+  currency: 'ARTC' | 'Pi' | 'USD' | 'USDT';
   type: 'nft' | 'service';
 }
 
@@ -253,10 +253,30 @@ export default function CheckoutPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-300 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent mb-2">
             Paiement sécurisé
           </h1>
-          <p className="text-gray-400">Finalisez votre achat en toute sécurité</p>
+          <p className="text-gray-400 mb-4">Finalisez votre achat en toute sécurité</p>
+          
+          {/* Devises acceptées */}
+          <div className="flex justify-center gap-6 items-center flex-wrap">
+            <div className="flex items-center gap-2 bg-gray-900/50 border border-blue-500/20 rounded-full px-4 py-2">
+              <span className="text-lg">💵</span>
+              <span className="text-sm font-medium text-gray-300">USD</span>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-900/50 border border-blue-500/20 rounded-full px-4 py-2">
+              <span className="text-lg">💳</span>
+              <span className="text-sm font-medium text-gray-300">USDT</span>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-900/50 border border-blue-500/20 rounded-full px-4 py-2">
+              <span className="text-lg">π</span>
+              <span className="text-sm font-medium text-gray-300">Pi Network</span>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-900/50 border border-blue-500/20 rounded-full px-4 py-2">
+              <span className="text-lg">🎨</span>
+              <span className="text-sm font-medium text-gray-300">ARTC</span>
+            </div>
+          </div>
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -270,8 +290,8 @@ export default function CheckoutPage() {
             <OrderSummary item={item} />
 
             {/* Donation section */}
-            <div className="mt-6 bg-gray-900/80 border border-yellow-500/20 rounded-2xl p-5 space-y-4">
-              <h2 className="text-lg font-semibold text-yellow-300">Soutenir la Fondation GlobalArtpro 💛</h2>
+            <div className="mt-6 bg-gray-900/80 border border-blue-500/20 rounded-2xl p-5 space-y-4">
+              <h2 className="text-lg font-semibold text-blue-300">Soutenir la Fondation GlobalArtpro 💙</h2>
               <p className="text-sm text-gray-300">Chaque contribution aide à préserver les cultures et soutenir les artistes dans le monde.</p>
 
               <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -289,8 +309,8 @@ export default function CheckoutPage() {
                     }}
                     className={`rounded-xl border p-2 text-sm font-medium transition-all ${
                       donationOption === option.value
-                        ? 'border-yellow-400 bg-yellow-400/20 text-yellow-100 shadow-lg shadow-yellow-500/15'
-                        : 'border-yellow-300/30 bg-black/40 text-gray-200 hover:border-yellow-400 hover:bg-yellow-400/10'
+                        ? 'border-blue-400 bg-blue-400/20 text-blue-100 shadow-lg shadow-blue-500/15'
+                        : 'border-blue-300/30 bg-slate-950/40 text-gray-200 hover:border-blue-400 hover:bg-blue-400/10'
                     }`}
                   >
                     {option.label}
@@ -301,8 +321,8 @@ export default function CheckoutPage() {
                   onClick={() => setDonationOption('custom')}
                   className={`rounded-xl border p-2 text-sm font-medium transition-all ${
                     donationOption === 'custom'
-                      ? 'border-yellow-400 bg-yellow-400/20 text-yellow-100 shadow-lg shadow-yellow-500/15'
-                      : 'border-yellow-300/30 bg-black/40 text-gray-200 hover:border-yellow-400 hover:bg-yellow-400/10'
+                      ? 'border-blue-400 bg-blue-400/20 text-blue-100 shadow-lg shadow-blue-500/15'
+                      : 'border-blue-300/30 bg-slate-950/40 text-gray-200 hover:border-blue-400 hover:bg-blue-400/10'
                   }`}
                 >
                   Montant personnalisé
@@ -317,7 +337,7 @@ export default function CheckoutPage() {
                     step="0.01"
                     value={customDonation}
                     onChange={(e) => setCustomDonation(e.target.value)}
-                    className="w-full rounded-lg border border-yellow-300/30 bg-black/50 px-3 py-2 text-white focus:border-yellow-400 focus:outline-none"
+                    className="w-full rounded-lg border border-blue-300/30 bg-slate-950/50 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
                     placeholder="0.00"
                   />
                 </div>
@@ -328,31 +348,31 @@ export default function CheckoutPage() {
                   type="checkbox"
                   checked={roundUp}
                   onChange={(e) => setRoundUp(e.target.checked)}
-                  className="h-4 w-4 rounded border-yellow-300/30 bg-black/40 accent-yellow-400"
+                  className="h-4 w-4 rounded border-blue-300/30 bg-slate-950/40 accent-blue-400"
                 />
                 <span>Arrondir le paiement pour soutenir la fondation</span>
               </label>
 
-              <div className="pt-3 border-t border-yellow-500/20 text-sm text-gray-100">
+              <div className="pt-3 border-t border-blue-500/20 text-sm text-gray-100">
                 <p>Prix initial: <span className="font-semibold">{item.price.toFixed(2)} {item.currency}</span></p>
                 <p>Don ajouté: <span className="font-semibold">{finalDonation.toFixed(2)} {item.currency}</span></p>
-                <p className="text-yellow-200">Total final: <span className="font-bold">{totalFinal.toFixed(2)} {item.currency}</span></p>
+                <p className="text-blue-200">Total final: <span className="font-bold">{totalFinal.toFixed(2)} {item.currency}</span></p>
               </div>
 
               {isSupporter && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="rounded-lg bg-yellow-500/15 border border-yellow-400/30 p-3 text-sm text-yellow-100"
+                  className="rounded-lg bg-blue-500/15 border border-blue-400/30 p-3 text-sm text-blue-100"
                 >
-                  Merci pour votre soutien 💛
+                  Merci pour votre soutien 💙
                 </motion.div>
               )}
             </div>
 
             {/* Payment Methods */}
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-              <h2 className="text-xl font-semibold mb-4 text-yellow-400">Méthode de paiement</h2>
+              <h2 className="text-xl font-semibold mb-4 text-blue-300">Méthode de paiement</h2>
               <PaymentMethods
                 methods={paymentMethods}
                 selectedMethod={selectedMethod}
@@ -368,7 +388,7 @@ export default function CheckoutPage() {
             transition={{ delay: 0.2 }}
             className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20"
           >
-            <h2 className="text-xl font-semibold mb-6 text-yellow-400">
+            <h2 className="text-xl font-semibold mb-6 text-blue-300">
               {paymentMethods.find(m => m.id === selectedMethod)?.name}
             </h2>
 
@@ -410,7 +430,7 @@ export default function CheckoutPage() {
               whileTap={{ scale: 0.98 }}
               onClick={handlePayment}
               disabled={isProcessing || !canProceed()}
-              className="w-full mt-6 px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-300 text-black font-bold rounded-xl hover:from-yellow-300 hover:to-yellow-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-500/20"
+              className="w-full mt-6 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-xl hover:from-blue-500 hover:to-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
             >
               {isProcessing ? (
                 <div className="flex items-center justify-center gap-3">
@@ -429,7 +449,7 @@ export default function CheckoutPage() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="mt-4 rounded-xl border border-yellow-400/40 bg-yellow-500/15 p-3 text-center text-sm text-yellow-100 shadow-lg shadow-yellow-500/30"
+                className="mt-4 rounded-xl border border-blue-500/40 bg-blue-600/15 p-3 text-center text-sm text-blue-100 shadow-lg shadow-blue-500/30"
               >
                 {paymentSuccessMessage}
               </motion.div>
@@ -447,13 +467,13 @@ export default function CheckoutPage() {
 
             {showPiModal && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-                <div className="w-full max-w-md rounded-xl border border-yellow-300/30 bg-gray-900 p-6 text-left">
-                  <h3 className="text-lg font-bold text-yellow-300 mb-2">Paiement Pi Network</h3>
+                <div className="w-full max-w-md rounded-xl border border-blue-500/30 bg-gray-900 p-6 text-left">
+                  <h3 className="text-lg font-bold text-blue-300 mb-2">Paiement Pi Network</h3>
                   <p className="text-sm text-gray-300 mb-4">Ce mode est préparatoire. Les paiements réels Pi seront gérés dans l’application App Studio, pas sur le web.</p>
                   <p className="text-xs text-gray-400 mb-6">SDK Pi non activé ici, rien n’est envoyé.</p>
                   <button
                     onClick={() => setShowPiModal(false)}
-                    className="rounded-lg bg-yellow-400/20 px-4 py-2 text-sm font-semibold text-yellow-100 hover:bg-yellow-400/30"
+                    className="rounded-lg bg-blue-600/20 px-4 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-600/30"
                   >
                     Fermer
                   </button>

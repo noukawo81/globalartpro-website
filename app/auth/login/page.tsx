@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) router.replace('/community');
+    if (isAuthenticated) router.replace('/dashboard');
   }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,7 +27,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result.success) {
-      router.replace('/community');
+      router.replace('/dashboard');
     } else {
       setError(result.message);
     }
@@ -39,9 +39,9 @@ export default function LoginPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-black/70 border border-yellow-400/30 rounded-2xl p-8 shadow-2xl backdrop-blur-xl"
+        className="w-full max-w-md bg-black/70 border border-blue-500/30 rounded-2xl p-8 shadow-2xl backdrop-blur-xl"
       >
-        <h1 className="text-3xl font-bold text-yellow-300 text-center mb-2">Connexion</h1>
+        <h1 className="text-3xl font-bold text-blue-300 text-center mb-2">Connexion</h1>
         <p className="text-sm text-gray-300 text-center mb-6">Bienvenue à nouveau dans la communauté GlobalArtpro</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -74,7 +74,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-2 text-black font-semibold rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-300 disabled:opacity-60"
+            className="w-full px-4 py-2 text-white font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:opacity-60 transition-all"
           >
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
@@ -82,7 +82,7 @@ export default function LoginPage() {
 
         <div className="mt-5 text-sm text-gray-300 text-center">
           Pas encore de compte ?{' '}
-          <Link href="/auth/register" className="text-yellow-300 hover:text-yellow-200">
+          <Link href="/auth/register" className="text-blue-400 hover:text-blue-300">
             Inscrivez-vous
           </Link>
         </div>

@@ -20,7 +20,7 @@ export default function FoundationPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.8 }}
-            className="text-4xl md:text-6xl font-black tracking-tight text-yellow-300"
+            className="text-4xl md:text-6xl font-black tracking-tight text-blue-300"
           >Fondation GlobalArtpro</motion.h1>
 
           <motion.p
@@ -47,14 +47,14 @@ export default function FoundationPage() {
             transition={{ delay: prefersReducedMotion ? 0 : 0.7, duration: 0.6 }}
             className="mt-10"
           >
-            <Link href="/foundation/donate/page" className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-200 text-black font-bold shadow-lg shadow-yellow-500/30 hover:scale-[1.01] transition transform">
-              Faire un don
+            <Link href="/foundation/donate" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold shadow-md hover:bg-blue-500 hover:shadow-[0_0_8px_rgba(59,130,246,0.3)] transition-all duration-300">
+              💙 Faire un don
             </Link>
           </motion.div>
 
           <div className="absolute inset-0 -z-10 pointer-events-none">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,213,0,0.22),_rgba(10,20,40,0.1)_60%)]" />
-            <div className="absolute -top-12 left-1/2 h-64 w-64 rounded-full bg-yellow-400/10 blur-3xl" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),_rgba(10,20,40,0.1)_60%)]" />
+            <div className="absolute -top-12 left-1/2 h-64 w-64 rounded-full bg-blue-600/10 blur-3xl" />
           </div>
         </div>
       </section>
@@ -72,21 +72,11 @@ export default function FoundationPage() {
                 className="p-5 rounded-2xl border border-blue-300/30 bg-slate-900/50 shadow-xl shadow-blue-900/20"
               >
                 <div className="text-4xl">{item.icon}</div>
-                <h3 className="mt-4 text-xl font-semibold text-yellow-300">{item.title}</h3>
+                <h3 className="mt-4 text-xl font-semibold text-blue-300">{item.title}</h3>
                 <p className="mt-2 text-sm text-slate-200">{item.description}</p>
               </motion.article>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="px-6 pb-20 md:px-12">
-        <div className="max-w-5xl mx-auto rounded-3xl border border-blue-400/20 p-6 bg-black/25 backdrop-blur-2xl">
-          <h2 className="text-2xl font-bold text-blue-100">Une expérience de don unique</h2>
-          <p className="mt-3 text-gray-300">Inspirez-vous du distributeur automatique artistique 3D pour transformer chaque généreux don en geste symbolique.</p>
-          <Link href="/foundation/donate/page" className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-yellow-400 text-black font-semibold shadow-lg hover:opacity-90 transition">
-            Explorer le Distributeur 3D
-          </Link>
         </div>
       </section>
     </main>

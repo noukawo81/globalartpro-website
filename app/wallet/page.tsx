@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { generateRewardHistory } from '@/lib/rewardEngine';
 import { usePi } from '@/context/PiContext';
+import ARTCWalletCard from '@/components/wallet/ARTCWalletCard';
 
 // Types
 interface Transaction {
@@ -62,12 +64,24 @@ const mockTransactions: Transaction[] = [
 ];
 
 export default function WalletPage() {
-  const [artcBalance] = useState(2500);
-  const [piBalance] = useState(2.5);
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
+  const { user: piUser, createPayment } = usePi();
   const [conversionAmount, setConversionAmount] = useState('');
   const [showConvertModal, setShowConvertModal] = useState(false);
+  const [artcBalance] = useState(2500);
+  const [piBalance] = useState(2.5);
   const [transactions] = useState(mockTransactions);
-  const { user, isAuthenticated, createPayment } = usePi();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const rewardHistory = generateRewardHistory(8);
   const rewardTotal = rewardHistory.reduce((sum, r) => sum + r.amount, 0);
@@ -115,7 +129,7 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-black text-white">
       {/* Header */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
@@ -134,7 +148,16 @@ export default function WalletPage() {
         </div>
       </motion.section>
 
-      <div className="max-w-6xl mx-auto px-4 pb-20">
+      <div className="max-w-6xl mx-auto px-4 py-12 space-y-12">
+        {/* ARTC Wallet Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          <ARTCWalletCard />
+        </motion.div>
+
         {/* Balances */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

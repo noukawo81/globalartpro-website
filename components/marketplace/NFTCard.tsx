@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { NFTItem } from '@/lib/mockNFTs';
 
 interface NFTCardProps {
@@ -10,6 +11,14 @@ interface NFTCardProps {
 }
 
 export default function NFTCard({ nft }: NFTCardProps) {
+  const router = useRouter();
+
+  const handleArtistClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/artist/${encodeURIComponent(nft.creator)}`);
+  };
+
   return (
     <Link href={`/explorer/${nft.id}`}>
       <motion.div
@@ -17,11 +26,11 @@ export default function NFTCard({ nft }: NFTCardProps) {
         whileTap={{ scale: 0.98 }}
         className="group cursor-pointer h-full"
       >
-        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 backdrop-blur-xl transition-all duration-300 hover:border-yellow-500/50 h-full flex flex-col">
+        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 backdrop-blur-xl transition-all duration-300 hover:border-blue-500/50 h-full flex flex-col">
           {/* Glow effect on hover */}
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 via-yellow-500/0 to-yellow-500/5 group-hover:from-yellow-500/10 group-hover:to-yellow-500/5" />
-            <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/0 via-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 blur-xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-blue-500/0 to-blue-500/5 group-hover:from-blue-500/10 group-hover:to-blue-500/5" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 blur-xl" />
           </div>
 
           {/* Image container */}
@@ -51,7 +60,7 @@ export default function NFTCard({ nft }: NFTCardProps) {
                 <motion.div
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-black shadow-lg shadow-yellow-500/50"
+                  className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-500/50"
                 >
                   <span className="text-sm font-bold">✓</span>
                 </motion.div>
@@ -70,11 +79,17 @@ export default function NFTCard({ nft }: NFTCardProps) {
           <div className="flex-1 p-4 flex flex-col justify-between relative z-10">
             {/* Title & Creator */}
             <div className="space-y-2">
-              <h3 className="text-base font-bold text-white group-hover:text-yellow-300 transition-colors line-clamp-2">
+              <h3 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors line-clamp-2">
                 {nft.title}
               </h3>
               <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">
-                par <span className="text-gray-300 font-medium">{nft.creator}</span>
+                par{' '}
+                <button
+                  onClick={handleArtistClick}
+                  className="text-blue-400 hover:text-blue-300 font-medium transition-colors underline"
+                >
+                  {nft.creator}
+                </button>
               </p>
             </div>
 
@@ -82,7 +97,7 @@ export default function NFTCard({ nft }: NFTCardProps) {
             <div className="border-t border-gray-800/50 pt-3 flex items-end justify-between">
               <div className="space-y-1">
                 <p className="text-xs text-gray-400">Prix</p>
-                <p className="text-lg font-bold text-yellow-300">
+                <p className="text-lg font-bold text-blue-300">
                   {nft.price.toLocaleString('fr-FR', {
                     maximumFractionDigits: nft.priceType === 'Pi' ? 2 : 0,
                   })}{' '}
@@ -106,7 +121,7 @@ export default function NFTCard({ nft }: NFTCardProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileHover={{ opacity: 1, y: 0 }}
-              className="text-sm font-semibold text-black bg-gradient-to-r from-yellow-400 to-yellow-300 px-6 py-2 rounded-lg pointer-events-auto"
+              className="text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-2 rounded-lg pointer-events-auto hover:from-blue-500 hover:to-blue-400"
             >
               Voir détails
             </motion.div>

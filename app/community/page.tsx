@@ -92,7 +92,7 @@ const HeroCommunity = () => (
     className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-gray-900 to-black overflow-hidden"
   >
     {/* Artistic ambiance effect */}
-    <div className="absolute inset-0 bg-gradient-radial from-gold-500/8 via-transparent to-transparent" />
+    <div className="absolute inset-0 bg-gradient-radial from-blue-600/8 via-transparent to-transparent" />
 
     <div className="relative z-10 text-center px-6 max-w-4xl">
       <motion.h1
@@ -108,7 +108,7 @@ const HeroCommunity = () => (
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.8, duration: 1 }}
-        className="text-xl md:text-2xl text-gold-400 leading-relaxed max-w-3xl mx-auto mb-8"
+        className="text-xl md:text-2xl text-blue-300 leading-relaxed max-w-3xl mx-auto mb-8"
       >
         Partagez, inspirez, soutenez les talents du monde
       </motion.p>
@@ -118,7 +118,7 @@ const HeroCommunity = () => (
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ delay: 1.2, duration: 1.5, type: 'spring' }}
-        className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-r from-gold-400/20 to-gold-600/20 blur-sm"
+        className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-r from-blue-600/20 to-blue-500/20 blur-sm"
       >
         <span className="text-4xl">👥</span>
       </motion.div>
@@ -153,7 +153,7 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose, post, onSu
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-gray-900/95 backdrop-blur-xl border border-gold-800/30 rounded-2xl p-6 max-w-md w-full mx-4"
+            className="bg-gray-900/95 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-6 max-w-md w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-xl font-semibold text-white mb-4 text-center">
@@ -162,8 +162,8 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose, post, onSu
 
             {post && (
               <div className="text-center mb-6">
-                <p className="text-gray-300 text-sm mb-2">"{post.title}"</p>
-                <p className="text-gold-400 text-sm">par {post.artist}</p>
+                <p className="text-gray-300 text-sm mb-2">'{post.title}'</p>
+                <p className="text-blue-300 text-sm">par {post.artist}</p>
               </div>
             )}
 
@@ -177,7 +177,7 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose, post, onSu
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 bg-black/50 border border-gold-800/30 rounded-lg text-white placeholder-gray-500 focus:border-gold-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-black/50 border border-blue-500/20 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
                   min="0"
                   step="0.01"
                 />
@@ -194,8 +194,8 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose, post, onSu
                       onClick={() => setCurrency(curr)}
                       className={`flex-1 px-3 py-2 rounded-lg border transition-colors ${
                         currency === curr
-                          ? 'border-gold-500 bg-gold-500/10 text-gold-300'
-                          : 'border-gold-800/30 bg-black/50 text-gray-300 hover:border-gold-600'
+                          ? 'border-blue-500 bg-blue-600/10 text-blue-300'
+                          : 'border-blue-500/20 bg-black/50 text-gray-300 hover:border-blue-500'
                       }`}
                     >
                       {curr}
@@ -212,14 +212,14 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose, post, onSu
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2 text-gray-300 border border-gold-800/30 rounded-lg hover:bg-white/5 transition-colors"
+                className="flex-1 px-4 py-2 text-gray-300 border border-blue-500/20 rounded-lg hover:bg-blue-500/5 transition-colors"
               >
                 Annuler
               </button>
               <button
                 onClick={handleSupport}
                 disabled={!amount || parseFloat(amount) <= 0}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-500 text-black font-medium rounded-lg hover:from-gold-500 hover:to-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium rounded-lg hover:from-blue-500 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 Soutenir
               </button>
@@ -257,7 +257,7 @@ const ArtistPostCard: React.FC<{
           />
           <div className="absolute top-3 right-3 flex gap-2">
             {post.supports > 0 && (
-              <div className="bg-black/70 backdrop-blur-sm px-2 py-1 rounded-full text-xs text-gold-300 flex items-center gap-1">
+              <div className="bg-black/70 backdrop-blur-sm px-2 py-1 rounded-full text-xs text-blue-300 flex items-center gap-1">
                 <span className="text-sm">🎨</span>
                 {post.supports} soutiens
               </div>
@@ -270,7 +270,7 @@ const ArtistPostCard: React.FC<{
         <div className="flex-1">
           <h3 className="text-xl font-semibold text-white mb-1">{post.title}</h3>
           <div className="flex items-center gap-2 text-sm text-gray-400">
-            <span className="font-medium text-gold-400">{post.artist}</span>
+            <span className="font-medium text-blue-300">{post.artist}</span>
             <span>•</span>
             <span>{post.country}</span>
             <span>•</span>
@@ -281,7 +281,7 @@ const ArtistPostCard: React.FC<{
           <span className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs text-center">
             Créateur Actif
           </span>
-          <span className="bg-gold-500/20 text-gold-400 px-2 py-1 rounded text-xs text-center">
+          <span className="bg-blue-600/20 text-blue-300 px-2 py-1 rounded text-xs text-center">
             Artiste Certifié
           </span>
         </div>

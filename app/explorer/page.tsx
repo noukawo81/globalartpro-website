@@ -66,7 +66,7 @@ export default function ExplorerPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="space-y-4"
           >
-            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-200 bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-blue-200 bg-clip-text text-transparent">
               Explorer les œuvres
             </h1>
             <p className="text-lg text-gray-400 max-w-2xl">
@@ -89,7 +89,7 @@ export default function ExplorerPage() {
               { label: 'Vues totales', value: Math.floor(mockNFTs.reduce((sum, n) => sum + n.views, 0) / 1000) + 'K' },
             ].map((stat, idx) => (
               <div key={idx} className="text-center">
-                <p className="text-2xl sm:text-3xl font-bold text-yellow-300">
+                <p className="text-2xl sm:text-3xl font-bold text-blue-300">
                   {stat.value}
                 </p>
                 <p className="text-xs sm:text-sm text-gray-400 mt-1">{stat.label}</p>
