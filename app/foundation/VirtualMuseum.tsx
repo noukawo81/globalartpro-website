@@ -699,8 +699,12 @@ function MuseumUI({ selectedArtwork, onClose, comments, onAddComment }: MuseumUI
   );
 }
 
+interface VirtualMuseumProps {
+  onLoadingComplete?: () => void;
+}
+
 // Main Virtual Museum Component
-export default function VirtualMuseum() {
+export default function VirtualMuseum({ onLoadingComplete }: VirtualMuseumProps) {
   const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
   const [comments, setComments] = useState<string[]>([]);
 
@@ -735,6 +739,9 @@ export default function VirtualMuseum() {
           outputColorSpace: 'srgb'
         }}
         dpr={[1, 2]}
+        onCreated={() => {
+          onLoadingComplete?.();
+        }}
       >
         <Suspense fallback={null}>
           <PerspectiveCamera makeDefault position={[0, 2.5, 10]} fov={50} />
