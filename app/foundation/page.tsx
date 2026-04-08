@@ -1,84 +1,157 @@
 'use client';
 
-import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import MinimalMuseum from './MinimalMuseum';
 
 const impactItems = [
-  { title: 'Aide aux artistes', description: "Micro-subventions, formation, exposition mondiale", icon: '🎨' },
-  { title: 'Préservation culturelle', description: "Archivage numérique, restauration et recherche", icon: '🛕' },
-  { title: 'Soutien social', description: "Projets éducatifs inclusifs et solidarité", icon: '🤝' },
+  { 
+    title: 'Renaissance Artistique', 
+    description: "Nous transformons le talent brut en signatures mondiales via l'IA et le support financier.", 
+    icon: '✨' 
+  },
+  { 
+    title: 'Archives Éternelles', 
+    description: "Numérisation 3D du patrimoine sacré pour qu'il ne disparaisse jamais de la mémoire humaine.", 
+    icon: '🏺' 
+  },
+  { 
+    title: 'Unité Humanitaire', 
+    description: "Chaque interaction sur GlobalArtPro nourrit directement nos projets de solidarité en Afrique.", 
+    icon: '🌍' 
+  },
 ];
 
 export default function FoundationPage() {
-  const prefersReducedMotion = useReducedMotion();
+  const router = useRouter();
+  const containerRef = useRef(null);
+  const transitionRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"]
+  });
+
+  const transitionScroll = useScroll({
+    target: transitionRef,
+    offset: ["start end", "end start"]
+  });
+
+  // Effet de parallaxe pour le titre
+  const yTitle = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const opacityHero = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+
+  // Transition vers la 3D
+  const museumOpacity = useTransform(transitionScroll.scrollYProgress, [0.3, 1], [0, 1]);
+  const textOpacity = useTransform(transitionScroll.scrollYProgress, [0, 0.7], [1, 0]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-black text-white overflow-x-hidden">
-      <section className="relative px-6 py-16 md:px-12 md:py-24">
-        <div className="max-w-5xl mx-auto text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.8 }}
-            className="text-4xl md:text-6xl font-black tracking-tight text-blue-300"
-          >Fondation GlobalArtpro</motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: prefersReducedMotion ? 0 : 0.2, duration: 0.8 }}
-            className="mt-6 text-xl md:text-2xl text-blue-100 font-semibold"
+    <main ref={containerRef} className="min-h-screen bg-[#050505] text-white selection:bg-gold-500/30">
+      
+      {/* SECTION HERO : LA VISION */}
+      <section className="relative h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+        <motion.div style={{ y: yTitle, opacity: opacityHero }} className="z-10 text-center">
+          <motion.span 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+            className="text-gold-500 text-xs font-bold uppercase tracking-[0.5em] mb-4 block"
           >
-            L’art au service de l’humanité
-          </motion.p>
-
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: prefersReducedMotion ? 0 : 0.4, duration: 0.8 }}
-            className="mt-6 max-w-3xl mx-auto text-sm md:text-lg text-gray-300"
+            Le Cœur de GlobalArtPro
+          </motion.span>
+          
+          <motion.h1 
+            className="text-5xl md:text-8xl font-serif italic mb-6 bg-gradient-to-b from-white via-white to-gray-500 bg-clip-text text-transparent"
           >
-            Chaque culture mérite d’être protégée. Chaque artiste mérite d’être soutenu. Chaque don construit un avenir meilleur.
-          </motion.p>
+            Fondation Humanité
+          </motion.h1>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: prefersReducedMotion ? 0 : 0.7, duration: 0.6 }}
-            className="mt-10"
-          >
-            <Link href="/foundation/donate" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold shadow-md hover:bg-blue-500 hover:shadow-[0_0_8px_rgba(59,130,246,0.3)] transition-all duration-300">
-              💙 Faire un don
-            </Link>
-          </motion.div>
+          <p className="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-light leading-relaxed">
+            "La gratitude d'être vivant se traduit par l'art. Nous ne créons pas seulement des images, nous préservons l'âme d'une civilisation."
+          </p>
 
-          <div className="absolute inset-0 -z-10 pointer-events-none">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),_rgba(10,20,40,0.1)_60%)]" />
-            <div className="absolute -top-12 left-1/2 h-64 w-64 rounded-full bg-blue-600/10 blur-3xl" />
+          <div className="mt-12 flex flex-col sm:flex-row gap-6 justify-center">
+            <button
+              onClick={() => router.push('/foundation/donate')}
+              className="px-8 py-4 bg-white text-black font-bold rounded-full hover:bg-gold-400 transition-colors duration-500"
+            >
+              Soutenir la Mission
+            </button>
+
           </div>
-        </div>
+        </motion.div>
+
+        {/* DÉCORATION D'ARRIÈRE-PLAN (LUMIÈRE SACRÉE) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold-600/5 rounded-full blur-[120px] pointer-events-none" />
       </section>
 
-      <section className="px-6 pb-20 md:px-12">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-blue-100 mb-8">Impact</h2>
-          <div className="grid gap-6 md:grid-cols-3">
-            {impactItems.map((item) => (
-              <motion.article
+      {/* SECTION IMPACT : CARTES DE LUXE */}
+      <section className="px-6 py-24 bg-white/[0.02]">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+            <div>
+              <h2 className="text-3xl font-light text-gray-400 uppercase tracking-widest">Notre Impact</h2>
+              <div className="h-1 w-20 bg-gold-500 mt-4" />
+            </div>
+            <p className="text-gray-500 max-w-sm text-sm">
+              Chaque contribution est tracée sur la blockchain pour garantir une transparence totale.
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            {impactItems.map((item, index) => (
+              <motion.div
                 key={item.title}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.6 }}
-                className="p-5 rounded-2xl border border-blue-300/30 bg-slate-900/50 shadow-xl shadow-blue-900/20"
+                whileHover={{ y: -10 }}
+                className="group p-8 rounded-[2rem] bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 hover:border-gold-500/50 transition-all duration-700"
               >
-                <div className="text-4xl">{item.icon}</div>
-                <h3 className="mt-4 text-xl font-semibold text-blue-300">{item.title}</h3>
-                <p className="mt-2 text-sm text-slate-200">{item.description}</p>
-              </motion.article>
+                <div className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl mb-6 group-hover:bg-gold-500 transition-colors duration-500">
+                  <span className="text-2xl">{item.icon}</span>
+                </div>
+                <h3 className="text-xl font-bold mb-4 text-white group-hover:text-gold-400 transition-colors">{item.title}</h3>
+                <p className="text-gray-400 leading-relaxed text-sm">
+                  {item.description}
+                </p>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
+
+      {/* SECTION TRANSITION : SCROLL-TO-EXPERIENCE */}
+      <section ref={transitionRef} className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Texte de transition */}
+        <motion.div
+          style={{ opacity: textOpacity }}
+          className="z-10 text-center px-6"
+        >
+          <h2 className="text-4xl md:text-6xl font-serif italic mb-6 bg-gradient-to-b from-white via-white to-gray-500 bg-clip-text text-transparent">
+            L'Expérience Spirituelle
+          </h2>
+          <p className="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-light leading-relaxed mb-8">
+            "Continuez à explorer... Laissez-vous transporter dans un espace où l'art transcende le temps et l'espace."
+          </p>
+          <div className="text-gold-500 text-sm uppercase tracking-widest">
+            ↓ Faites défiler pour entrer dans le sanctuaire
+          </div>
+        </motion.div>
+
+        {/* Musée 3D qui apparaît en fondu */}
+        <motion.div
+          style={{ opacity: museumOpacity }}
+          className="absolute inset-0"
+        >
+          <MinimalMuseum />
+        </motion.div>
+
+        {/* Overlay subtil pour la transition */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-transparent to-[#050505] pointer-events-none" />
+      </section>
+
+      {/* FOOTER SPIRITUEL */}
+      <footer className="py-20 text-center border-t border-white/5">
+        <p className="text-xs tracking-[0.3em] text-gray-600 uppercase">
+          GlobalArtPro © 2026 — Côte d'Ivoire & International
+        </p>
+      </footer>
     </main>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -16,6 +16,11 @@ export default function RewardsPage() {
   const [rewardHistory] = useState(generateRewardHistory(15));
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
+  const [miningActive, setMiningActive] = useState(false);
+  const [miningStart, setMiningStart] = useState<number | null>(null);
+  const [miningCountdown, setMiningCountdown] = useState('24:00:00');
+  const [minedArtc, setMinedArtc] = useState(0);
+
   const totalEarnings = rewardHistory.reduce((sum, r) => sum + r.amount, 0);
   const dailyAverage = Math.floor(totalEarnings / 15);
 
@@ -29,6 +34,61 @@ export default function RewardsPage() {
   };
 
   const qualityScore = calculateQualityScore(mockQuality);
+
+  const MINING_REWARD_PER_DAY = 2;
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (miningActive && miningStart) {
+      timer = setInterval(() => {
+        const elapsed = Date.now() - miningStart;
+        const earned = Math.floor((elapsed / MS_PER_DAY) * MINING_REWARD_PER_DAY * 100) / 100;
+        setMinedArtc(earned);
+        const next = MS_PER_DAY - (elapsed % MS_PER_DAY);
+        const h = String(Math.floor(next / (60 * 60 * 1000))).padStart(2, '0');
+        const m = String(Math.floor((next % (60 * 60 * 1000)) / (60 * 1000))).padStart(2, '0');
+        const s = String(Math.floor((next % (60 * 1000)) / 1000)).padStart(2, '0');
+        setMiningCountdown(`${h}:${m}:${s}`);
+      }, 1000);
+    }
+    return () => { if (timer) clearInterval(timer); };
+  }, [miningActive, miningStart]);
+
+  const startMining = () => {
+    if (!miningStart) setMiningStart(Date.now());
+    setMiningActive(true);
+  };
+
+  const stopMining = () => {
+    setMiningActive(false);
+  };
+
+  if (miningActive) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-gray-950 to-black text-white flex items-center justify-center p-6">
+        <div className="w-full max-w-lg rounded-3xl border border-amber-500/40 bg-slate-900/90 p-8">
+          <h1 className="text-4xl font-bold text-amber-300 mb-4">Minage ARTC en cours</h1>
+          <p className="text-gray-300 mb-4">ARTC rare et précieux. 2 ARTC / 24h</p>
+          <div className="text-5xl font-extrabold text-lime-300 mb-2">{minedArtc.toFixed(2)} ARTC</div>
+          <p className="text-gray-400 mb-6">Temps avant prochaine tranche: {miningCountdown}</p>
+
+          <div className="rounded-xl border border-blue-700/60 bg-blue-950/50 p-4 text-sm text-white/90 mb-6">
+            <p>Créer un NFT certifié = 1 ARTC</p>
+            <p>Certification NFT = 3 ARTC</p>
+            <p>Vente NFT = 5 ARTC</p>
+          </div>
+
+          <button
+            onClick={stopMining}
+            className="w-full rounded-full bg-amber-400 py-3 font-bold text-slate-900 hover:bg-amber-300 transition"
+          >
+            Arrêter le minage
+          </button>
+        </div>
+      </main>
+    )
+  }
 
   // Example reward scenarios
   const rewardExamples = [
@@ -85,6 +145,17 @@ export default function RewardsPage() {
             </div>
           </div>
         </motion.section>
+
+        <div className="rounded-3xl border border-blue-500/20 bg-slate-900/60 p-6 text-center">
+          <p className="text-lg text-gray-200">Minage ARTC en un clic</p>
+          <button
+            onClick={startMining}
+            className="mt-4 rounded-full bg-amber-400 px-6 py-3 font-bold text-slate-900 hover:bg-amber-300 transition"
+          >
+            Démarrer le minage ARTC
+          </button>
+          <p className="text-xs text-gray-300 mt-2">Cliquez pour afficher uniquement le compteur chronométrique.</p>
+        </div>
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-3 gap-6">

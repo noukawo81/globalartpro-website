@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import { Suspense } from "react";
 import Navbar from "@/components/layout/Navbar";
 import { PiProvider } from "@/context/PiContext";
 import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
+import AIAssistant from '@/components/ui/AIAssistant';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,10 +42,15 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-black">
         <AuthProvider>
           <PiProvider>
-            <Navbar />
+            <Suspense fallback={<div className="h-20 sm:h-24 bg-gray-900" />}>
+              <Navbar />
+            </Suspense>
             <main className="pt-16 sm:pt-20">
               {children}
             </main>
+            <Suspense fallback={null}>
+              <AIAssistant />
+            </Suspense>
           </PiProvider>
         </AuthProvider>
       </body>

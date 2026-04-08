@@ -6,6 +6,13 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { NFTItem } from '@/lib/mockNFTs';
 
+const USD_RATES = {
+  ARTC: 150, // 1 ARTC = 150 USD
+  Pi: 10,   // 1 Pi = 10 USD
+};
+
+const OFFERED_PAYMENT_OPTIONS = ['USDT', 'PI', 'ARTC'] as const;
+
 interface NFTCardProps {
   nft: NFTItem;
 }
@@ -16,7 +23,13 @@ export default function NFTCard({ nft }: NFTCardProps) {
   const handleArtistClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    router.push(`/artist/${encodeURIComponent(nft.creator)}`);
+    router.push(`/artists`);
+  };
+
+  const priceInUSD = nft.priceType === 'ARTC' ? nft.price * USD_RATES.ARTC : nft.price * USD_RATES.Pi;
+
+  const handleBuy = (currency: typeof OFFERED_PAYMENT_OPTIONS[number]) => {
+    alert(`Achat de ${nft.title} pour ${nft.price} ${currency} (équivalent USD ≈ ${priceInUSD.toFixed(2)}).`);
   };
 
   return (
@@ -94,7 +107,7 @@ export default function NFTCard({ nft }: NFTCardProps) {
             </div>
 
             {/* Price */}
-            <div className="border-t border-gray-800/50 pt-3 flex items-end justify-between">
+            <div className="border-t border-gray-800/50 pt-3 flex flex-col gap-3">
               <div className="space-y-1">
                 <p className="text-xs text-gray-400">Prix</p>
                 <p className="text-lg font-bold text-blue-300">
@@ -105,7 +118,25 @@ export default function NFTCard({ nft }: NFTCardProps) {
                     {nft.priceType}
                   </span>
                 </p>
+                <p className="text-xs text-gray-400">≈ {priceInUSD.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} USD</p>
               </div>
+
+              <div className="flex flex-wrap gap-2">
+                {OFFERED_PAYMENT_OPTIONS.map((currency) => (
+                  <button
+                    key={currency}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleBuy(currency);
+                    }}
+                    className="px-2 py-1 rounded-md bg-blue-700 text-xs text-white hover:bg-blue-600 transition"
+                  >
+                    Acheter en {currency}
+                  </button>
+                ))}
+              </div>
+            </div>
 
               {/* Certified indicator */}
               {!nft.certified && (
@@ -114,7 +145,6 @@ export default function NFTCard({ nft }: NFTCardProps) {
                 </div>
               )}
             </div>
-          </div>
 
           {/* Hover button */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6 pointer-events-none">

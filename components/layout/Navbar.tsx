@@ -10,18 +10,24 @@ import { useAuth } from '@/context/AuthContext';
 
 // Navigation pour VISITEURS (non connectés)
 const publicNavLinks = [
-  { name: 'Accueil', href: '/' },
-  { name: 'Explorer', href: '/explorer' },
+  { name: 'Artistes', href: '/artists' },
+  { name: 'Portail Culture', href: '/culture' },
+  { name: 'GAP Studio IA', href: '/create' },
+  { name: 'Musée 3D', href: '/museum' },
+  { name: 'Marketplace', href: '/explorer' },
+  { name: '⛏️ Minage ARTC', href: '/rewards' },
+  { name: 'Fondation', href: '/foundation' },
 ];
 
 // Navigation pour UTILISATEURS CONNECTÉS
 const authenticatedNavLinks = [
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Explorer', href: '/explorer' },
-  { name: 'Créer', href: '/create' },
-  { name: 'Communauté', href: '/community' },
+  { name: 'Artistes', href: '/artists' },
+  { name: 'Portail Culture', href: '/culture' },
+  { name: 'GAP Studio IA', href: '/create' },
+  { name: 'Musée 3D', href: '/museum' },
+  { name: 'Marketplace', href: '/explorer' },
+  { name: '⛏️ Minage ARTC', href: '/rewards' },
   { name: 'Fondation', href: '/foundation' },
-  { name: 'Wallet', href: '/wallet' },
 ];
 
 export default function Navbar() {
@@ -29,7 +35,7 @@ export default function Navbar() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { user: authUser, isAuthenticated, logout: authLogout } = useAuth();
+  const { user: authUser, isAuthenticated, logout: authLogout, isAdmin } = useAuth();
   const { user: piUser, isLoading, login } = usePi();
 
   // Détect scroll pour effect glassmorphism amélioré
@@ -78,20 +84,21 @@ export default function Navbar() {
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              className="flex-shrink-0"
             >
               <Link
                 href="/"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 whitespace-nowrap"
               >
                 <Image
-                  src="/logos/globalartpro.jpeg"
+                  src="/logos/globalartpro.jpg"
                   alt="GlobalArtpro"
                   width={40}
                   height={40}
                   className="object-contain w-8 h-8 md:w-10 md:h-10"
                   priority
                 />
-                <span className="text-lg md:text-xl font-bold text-white hidden sm:inline">
+                <span className="text-sm md:text-base lg:text-lg font-bold text-white hidden sm:inline">
                   GlobalArtpro
                 </span>
               </Link>
@@ -148,17 +155,30 @@ export default function Navbar() {
                   </Link>
                 </>
               ) : (
-                // CONNECTÉ: Username + Don + Déconnexion
+                // CONNECTÉ: Username + Don + Admin (si admin) + Déconnexion
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-blue-600/15 border border-blue-500/20 rounded-lg">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                    <span className="text-blue-200 text-sm font-medium">{authUser?.username}</span>
-                  </div>
+                  <Link href="/profile">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-600/15 border border-blue-500/20 rounded-lg cursor-pointer hover:bg-blue-600/25 transition-colors">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                      <span className="text-blue-200 text-sm font-medium">{authUser?.username}</span>
+                    </div>
+                  </Link>
+                  {isAdmin && (
+                    <Link href="/admin">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-4 py-2 text-red-300 text-sm font-bold rounded-lg bg-red-600/15 border border-red-500/20 hover:bg-red-600/25 transition-all shadow-lg"
+                      >
+                        🔧 Admin
+                      </motion.button>
+                    </Link>
+                  )}
                   <Link href="/foundation/donate">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="px-4 py-2 text-white text-sm font-bold rounded-lg bg-blue-600 hover:bg-blue-500 transition-all shadow-lg"
+                      className="px-4 py-2 text-blue-200 text-sm font-semibold rounded-lg bg-blue-600/30 border border-blue-500/40 hover:bg-blue-600/50 hover:text-white transition-all"
                     >
                       💙 Don
                     </motion.button>
@@ -242,20 +262,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Auth / Pi shortcut bar - Masqué pour visiteurs */}
-        {isAuthenticated && (
-          <div className="md:hidden bg-slate-900/95 border-t border-blue-500/10 py-2">
-            <div className="flex items-center gap-1 px-3 overflow-x-auto scrollbar-thin scrollbar-thumb-blue-500/40 scrollbar-track-slate-900">
-              <span className="flex-shrink-0 rounded-lg bg-blue-600/20 border border-blue-500/20 px-2.5 py-1.5 text-xs font-medium text-blue-200">{authUser?.username}</span>
-              <button
-                onClick={handleLogout}
-                className="flex-shrink-0 rounded-lg border border-slate-700/50 px-2.5 py-1.5 text-xs font-semibold text-gray-200 hover:text-white hover:border-slate-600 hover:bg-slate-800/50 transition-all"
-              >
-                Déconnexion
-              </button>
-            </div>
-          </div>
-        )}
       </motion.nav>
 
       {/* Mobile Menu */}
@@ -333,30 +339,7 @@ export default function Navbar() {
 
                   </>
                 ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 border border-blue-500/30 rounded-lg">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                      <span className="text-blue-200 text-sm font-medium">
-                        {authUser?.username}
-                      </span>
-                    </div>
-                    <Link href="/checkout" className="w-full">
-                      <motion.button
-                        whileHover={{ x: 10 }}
-                        className="w-full text-left px-4 py-3 text-white font-bold bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 rounded-lg transition-all"
-                      >
-                        💙 Faire un Don
-                      </motion.button>
-                    </Link>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleLogout}
-                      className="w-full px-4 py-3 text-gray-300 font-medium rounded-lg hover:bg-blue-500/10 transition-colors"
-                    >
-                      Déconnexion
-                    </motion.button>
-                  </div>
+                  <></>
                 )}
               </div>
             </div>

@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { Clipboard, Share2, MessageCircle, Mail, CheckCircle, Users, Zap, Trophy } from 'lucide-react';
 
 export default function ReferralCard() {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [shareMethod, setShareMethod] = useState<string | null>(null);
 
   if (!user?.referralCode) return null;
 
@@ -23,15 +25,19 @@ export default function ReferralCard() {
   };
 
   const shareOnTwitter = () => {
-    const text = `Rejoins-moi sur GlobalArtpro! Gagne +2 ARTC et j'aurais +10 ARTC. ${referralUrl}`;
+    const text = `🎨 Rejoins-moi sur GlobalArtpro! Une plateforme pour les artistes du monde. 🌍\n\n💎 Bonus +2 ARTC pour toi\n➕ +10 ARTC pour moi\n\nC'est du win-win! 🚀\n\n${referralUrl}`;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
+    setShareMethod('twitter');
+    setTimeout(() => setShareMethod(null), 3000);
   };
 
   const shareOnWhatsApp = () => {
-    const text = `Rejoins-moi sur GlobalArtpro! Gagne +2 ARTC et j'aurais +10 ARTC. ${referralUrl}`;
+    const text = `🎨 *Rejoins-moi sur GlobalArtpro!*\n\nUne plateforme incroyable pour les artistes du monde.\n\n💎 Tu gagnes: +2 ARTC\n➕ Je gagne: +10 ARTC\n\n${referralUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
+    setShareMethod('whatsapp');
+    setTimeout(() => setShareMethod(null), 3000);
   };
 
   return (
