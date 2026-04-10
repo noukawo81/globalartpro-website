@@ -28,6 +28,7 @@ interface FraudDetection {
 const securityEvents: SecurityEvent[] = [];
 const fraudDatabase: Record<string, FraudDetection> = {};
 const emailVerificationCodes: Record<string, { code: string; expires: number; attempts: number }> = {};
+const passwordResetCodes: Record<string, { code: string; expires: number; attempts: number; email: string }> = {};
 
 // Configuration de sécurité
 const SECURITY_CONFIG = {
@@ -219,9 +220,47 @@ export async function POST(request: NextRequest) {
           attempts: (existingCode?.attempts || 0) + 1
         };
 
-        // Simuler l'envoi d'email (en production, utiliser un service comme SendGrid)
-        console.log(`📧 Code de vérification pour ${email}: ${code}`);
+        // Envoyer l'email avec le code
+        try {
+          const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: email,
+              subject: 'Vérifiez votre email - GlobalArtPro',
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
+                    <h1 style="color: white; margin: 0;">GlobalArtPro</h1>
+                  </div>
+                  <div style="padding: 40px; background: #f5f5f5; border-radius: 0 0 8px 8px;">
+                    <h2 style="color: #333; text-align: center;">Vérification d'email</h2>
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                      Bonjour,<br><br>
+                      Merci de votre inscription à GlobalArtPro. Pour finaliser votre inscription, veuillez utiliser le code de vérification ci-dessous :
+                    </p>
+                    <div style="background: white; padding: 20px; text-align: center; margin: 20px 0; border-radius: 4px; border: 2px solid #667eea;">
+                      <p style="font-size: 32px; font-weight: bold; color: #667eea; margin: 0; letter-spacing: 2px;">${code}</p>
+                      <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">Ce code expire dans 15 minutes</p>
+                    </div>
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                      Si vous n'avez pas demandé cette vérification, veuillez ignorer cet email.
+                    </p>
+                  </div>
+                </div>
+              `,
+              text: `Votre code de vérification GlobalArtPro: ${code}. Ce code expire dans 15 minutes.`
+            })
+          });
 
+          if (!emailResponse.ok) {
+            console.warn('Avertissement: Email non envoyé, mais code généré avec succès');
+          }
+        } catch (error) {
+          console.warn('Erreur envoi email:', error, 'Code généré:', code);
+        }
+
+        console.log(`📧 Code de vérification pour ${email}: ${code}`);
         logSecurityEvent('email_verification', 'low', request, { sent: true }, undefined, email);
 
         return NextResponse.json({
@@ -274,6 +313,135 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'Email vérifié avec succès!'
         });
+
+      case 'send_password_reset_email':
+        // Vérifier les limites
+        const existingResetCode = passwordResetCodes[email];
+        if (existingResetCode) {
+          if (existingResetCode.attempts >= SECURITY_CONFIG.MAX_EMAIL_VERIFICATION_ATTEMPTS) {
+            logSecurityEvent('fraud_attempt', 'medium', request, { reason: 'too_many_reset_attempts' }, undefined, email);
+            return NextResponse.json({
+              error: 'Trop de tentatives. Réessayez dans 1 heure.'
+            }, { status: 429 });
+          }
+
+          if (Date.now() - existingResetCode.expires < 60000) { // 1 minute minimum entre envois
+            return NextResponse.json({
+              error: 'Veuillez attendre avant de redemander un code.'
+            }, { status: 429 });
+          }
+        }
+
+        // Générer et stocker le code de réinitialisation
+        const resetCode = generateEmailVerificationCode();
+        passwordResetCodes[email] = {
+          code: resetCode,
+          email,
+          expires: Date.now() + SECURITY_CONFIG.EMAIL_VERIFICATION_CODE_EXPIRY,
+          attempts: (existingResetCode?.attempts || 0) + 1
+        };
+
+        // Envoyer l'email avec le code de réinitialisation
+        try {
+          const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: email,
+              subject: 'Réinitialisez votre mot de passe - GlobalArtPro',
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
+                    <h1 style="color: white; margin: 0;">GlobalArtPro</h1>
+                  </div>
+                  <div style="padding: 40px; background: #f5f5f5; border-radius: 0 0 8px 8px;">
+                    <h2 style="color: #333; text-align: center;">Réinitialisation du mot de passe</h2>
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                      Bonjour,<br><br>
+                      Vous avez demandé la réinitialisation de votre mot de passe GlobalArtPro. Veuillez utiliser le code ci-dessous :
+                    </p>
+                    <div style="background: white; padding: 20px; text-align: center; margin: 20px 0; border-radius: 4px; border: 2px solid #764ba2;">
+                      <p style="font-size: 32px; font-weight: bold; color: #764ba2; margin: 0; letter-spacing: 2px;">${resetCode}</p>
+                      <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">Ce code expire dans 15 minutes</p>
+                    </div>
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                      Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email et ne pas partager ce code.
+                    </p>
+                  </div>
+                </div>
+              `,
+              text: `Votre code de réinitialisation de mot de passe GlobalArtPro: ${resetCode}. Ce code expire dans 15 minutes.`
+            })
+          });
+
+          if (!emailResponse.ok) {
+            console.warn('Avertissement: Email non envoyé, mais code généré avec succès');
+          }
+        } catch (error) {
+          console.warn('Erreur envoi email:', error, 'Code généré:', resetCode);
+        }
+
+        console.log(`🔑 Code de réinitialisation pour ${email}: ${resetCode}`);
+        logSecurityEvent('email_verification', 'low', request, { reset: true }, undefined, email);
+
+        return NextResponse.json({
+          success: true,
+          message: 'Code de réinitialisation envoyé à votre email.',
+          expiresIn: SECURITY_CONFIG.EMAIL_VERIFICATION_CODE_EXPIRY / 1000
+        });
+
+      case 'verify_password_reset_code':
+        const { verificationCode: resetVerificationCode } = body;
+        const storedResetCode = passwordResetCodes[email];
+
+        if (!storedResetCode) {
+          logSecurityEvent('fraud_attempt', 'medium', request, { reason: 'no_reset_code' }, undefined, email);
+          return NextResponse.json({
+            error: 'Aucun code de réinitialisation trouvé. Veuillez en demander un nouveau.'
+          }, { status: 400 });
+        }
+
+        if (Date.now() > storedResetCode.expires) {
+          delete passwordResetCodes[email];
+          logSecurityEvent('fraud_attempt', 'low', request, { reason: 'expired_reset_code' }, undefined, email);
+          return NextResponse.json({
+            error: 'Code expiré. Veuillez en demander un nouveau.'
+          }, { status: 400 });
+        }
+
+        if (storedResetCode.code !== resetVerificationCode) {
+          storedResetCode.attempts++;
+          if (storedResetCode.attempts >= SECURITY_CONFIG.MAX_EMAIL_VERIFICATION_ATTEMPTS) {
+            delete passwordResetCodes[email];
+            logSecurityEvent('fraud_attempt', 'high', request, { reason: 'too_many_wrong_reset_codes' }, undefined, email);
+            return NextResponse.json({
+              error: 'Trop d\'erreurs. Réinitialisation temporairement bloquée.'
+            }, { status: 429 });
+          }
+
+          logSecurityEvent('fraud_attempt', 'low', request, { reason: 'wrong_reset_code' }, undefined, email);
+          return NextResponse.json({
+            error: 'Code incorrect.',
+            attemptsLeft: SECURITY_CONFIG.MAX_EMAIL_VERIFICATION_ATTEMPTS - storedResetCode.attempts
+          }, { status: 400 });
+        }
+
+        // Code correct - marquer comme vérifié (ne pas supprimer encore)
+        logSecurityEvent('email_verification', 'low', request, { reset_verified: true }, undefined, email);
+
+        return NextResponse.json({
+          success: true,
+          message: 'Code vérifié. Vous pouvez maintenant réinitialiser votre mot de passe.'
+        });
+
+      case 'reset_password_complete':
+        // Supprimer le code de réinitialisation après utilisation réussie
+        if (passwordResetCodes[email] && passwordResetCodes[email].code === verificationCode) {
+          delete passwordResetCodes[email];
+          logSecurityEvent('email_verification', 'low', request, { password_reset_complete: true }, undefined, email);
+          return NextResponse.json({ success: true });
+        }
+        return NextResponse.json({ error: 'Code invalide' }, { status: 400 });
 
       case 'report_registration_attempt':
         // Enregistrer une tentative d'inscription pour analyse de fraude
