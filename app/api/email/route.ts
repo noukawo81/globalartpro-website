@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
 
 /**
- * API pour envoyer des emails
- * En production, utiliser SendGrid, AWS SES, ou similaire
+ * API pour envoyer des emails via Resend
+ * En production, utilise Resend pour l'envoi réel d'emails
  */
 
 interface EmailPayload {
@@ -11,6 +12,9 @@ interface EmailPayload {
   html: string;
   text?: string;
 }
+
+// Initialiser Resend avec la clé API
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,41 +29,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // En développement, logger seulement
-    console.log('📧 ========================');
-    console.log(`📧 Email envoyé à: ${to}`);
-    console.log(`📧 Sujet: ${subject}`);
-    console.log(`📧 Contenu: ${text || '[HTML seulement]'}`);
-    console.log('📧 ========================');
+    // Envoyer l'email via Resend
+    const { data, error } = await resend.emails.send({
+      from: "GlobalArtPro <verification@mail.globalartpro.com>",
+      to: to,
+      subject: subject,
+      html: html,
+      text: text,
+    });
 
-    // En production, vous devriez utiliser un service comme:
-    // - SendGrid (https://sendgrid.com)
-    // - Resend (https://resend.com)
-    // - AWS SES (https://aws.amazon.com/ses/)
-    // - Mailgun (https://www.mailgun.com)
-
-    // Pour cet exemple, on simule un envoi réussi
-    // TODO: Implémenter avec un vrai service d'email
-
-    // Stocker dans localStorage côté serveur si développement
-    if (process.env.NODE_ENV === 'development') {
-      // On pourrait aussi sauvegarder dans une base de données pour debug
-      console.log('✅ Email enregistré en mode développement');
+    if (error) {
+      console.error('Erreur Resend:', error);
+      return NextResponse.json(
+        { error: 'Erreur lors de l\'envoi de l\'email', details: error.message },
+        { status: 500 }
+      );
     }
 
+    console.log('📧 Email envoyé avec succès:', data);
+
     return NextResponse.json(
-      { 
+      {
         success: true,
         message: 'Email envoyé avec succès',
-        devMode: true,
-        devNote: 'En développement, vérifiez les logs serveur pour les détails'
+        data: data
       },
       { status: 200 }
     );
   } catch (error) {
     console.error('Erreur envoi email:', error);
     return NextResponse.json(
-      { error: 'Erreur lors de l\'envoi de l\'email' },
+      { error: 'Erreur interne lors de l\'envoi de l\'email' },
       { status: 500 }
     );
   }

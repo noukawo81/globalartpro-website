@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sendEmail } from '@/lib/emailService';
 
 // Types de sécurité
 interface SecurityEvent {
@@ -222,39 +223,35 @@ export async function POST(request: NextRequest) {
 
         // Envoyer l'email avec le code
         try {
-          const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: email,
-              subject: 'Vérifiez votre email - GlobalArtPro',
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
-                    <h1 style="color: white; margin: 0;">GlobalArtPro</h1>
-                  </div>
-                  <div style="padding: 40px; background: #f5f5f5; border-radius: 0 0 8px 8px;">
-                    <h2 style="color: #333; text-align: center;">Vérification d'email</h2>
-                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
-                      Bonjour,<br><br>
-                      Merci de votre inscription à GlobalArtPro. Pour finaliser votre inscription, veuillez utiliser le code de vérification ci-dessous :
-                    </p>
-                    <div style="background: white; padding: 20px; text-align: center; margin: 20px 0; border-radius: 4px; border: 2px solid #667eea;">
-                      <p style="font-size: 32px; font-weight: bold; color: #667eea; margin: 0; letter-spacing: 2px;">${code}</p>
-                      <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">Ce code expire dans 15 minutes</p>
-                    </div>
-                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
-                      Si vous n'avez pas demandé cette vérification, veuillez ignorer cet email.
-                    </p>
-                  </div>
+          const emailResult = await sendEmail({
+            to: email,
+            subject: 'Vérifiez votre email - GlobalArtPro',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
+                  <h1 style="color: white; margin: 0;">GlobalArtPro</h1>
                 </div>
-              `,
-              text: `Votre code de vérification GlobalArtPro: ${code}. Ce code expire dans 15 minutes.`
-            })
+                <div style="padding: 40px; background: #f5f5f5; border-radius: 0 0 8px 8px;">
+                  <h2 style="color: #333; text-align: center;">Vérification d'email</h2>
+                  <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                    Bonjour,<br><br>
+                    Merci de votre inscription à GlobalArtPro. Pour finaliser votre inscription, veuillez utiliser le code de vérification ci-dessous :
+                  </p>
+                  <div style="background: white; padding: 20px; text-align: center; margin: 20px 0; border-radius: 4px; border: 2px solid #667eea;">
+                    <p style="font-size: 32px; font-weight: bold; color: #667eea; margin: 0; letter-spacing: 2px;">${code}</p>
+                    <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">Ce code expire dans 15 minutes</p>
+                  </div>
+                  <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                    Si vous n'avez pas demandé cette vérification, veuillez ignorer cet email.
+                  </p>
+                </div>
+              </div>
+            `,
+            text: `Votre code de vérification GlobalArtPro: ${code}. Ce code expire dans 15 minutes.`
           });
 
-          if (!emailResponse.ok) {
-            console.warn('Avertissement: Email non envoyé, mais code généré avec succès');
+          if (!emailResult.success) {
+            console.warn('Avertissement: Email non envoyé, mais code généré avec succès:', emailResult.error);
           }
         } catch (error) {
           console.warn('Erreur envoi email:', error, 'Code généré:', code);
@@ -343,39 +340,35 @@ export async function POST(request: NextRequest) {
 
         // Envoyer l'email avec le code de réinitialisation
         try {
-          const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: email,
-              subject: 'Réinitialisez votre mot de passe - GlobalArtPro',
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
-                    <h1 style="color: white; margin: 0;">GlobalArtPro</h1>
-                  </div>
-                  <div style="padding: 40px; background: #f5f5f5; border-radius: 0 0 8px 8px;">
-                    <h2 style="color: #333; text-align: center;">Réinitialisation du mot de passe</h2>
-                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
-                      Bonjour,<br><br>
-                      Vous avez demandé la réinitialisation de votre mot de passe GlobalArtPro. Veuillez utiliser le code ci-dessous :
-                    </p>
-                    <div style="background: white; padding: 20px; text-align: center; margin: 20px 0; border-radius: 4px; border: 2px solid #764ba2;">
-                      <p style="font-size: 32px; font-weight: bold; color: #764ba2; margin: 0; letter-spacing: 2px;">${resetCode}</p>
-                      <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">Ce code expire dans 15 minutes</p>
-                    </div>
-                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
-                      Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email et ne pas partager ce code.
-                    </p>
-                  </div>
+          const emailResult = await sendEmail({
+            to: email,
+            subject: 'Réinitialisez votre mot de passe - GlobalArtPro',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
+                  <h1 style="color: white; margin: 0;">GlobalArtPro</h1>
                 </div>
-              `,
-              text: `Votre code de réinitialisation de mot de passe GlobalArtPro: ${resetCode}. Ce code expire dans 15 minutes.`
-            })
+                <div style="padding: 40px; background: #f5f5f5; border-radius: 0 0 8px 8px;">
+                  <h2 style="color: #333; text-align: center;">Réinitialisation du mot de passe</h2>
+                  <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                    Bonjour,<br><br>
+                    Vous avez demandé la réinitialisation de votre mot de passe GlobalArtPro. Veuillez utiliser le code ci-dessous :
+                  </p>
+                  <div style="background: white; padding: 20px; text-align: center; margin: 20px 0; border-radius: 4px; border: 2px solid #764ba2;">
+                    <p style="font-size: 32px; font-weight: bold; color: #764ba2; margin: 0; letter-spacing: 2px;">${resetCode}</p>
+                    <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">Ce code expire dans 15 minutes</p>
+                  </div>
+                  <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                    Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email et ne pas partager ce code.
+                  </p>
+                </div>
+              </div>
+            `,
+            text: `Votre code de réinitialisation de mot de passe GlobalArtPro: ${resetCode}. Ce code expire dans 15 minutes.`
           });
 
-          if (!emailResponse.ok) {
-            console.warn('Avertissement: Email non envoyé, mais code généré avec succès');
+          if (!emailResult.success) {
+            console.warn('Avertissement: Email non envoyé, mais code généré avec succès:', emailResult.error);
           }
         } catch (error) {
           console.warn('Erreur envoi email:', error, 'Code généré:', resetCode);

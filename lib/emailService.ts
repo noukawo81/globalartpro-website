@@ -3,6 +3,8 @@
  * Supporte l'envoi de codes de vérification et de réinitialisation de mot de passe
  */
 
+import { Resend } from 'resend';
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -10,23 +12,28 @@ interface EmailOptions {
   text?: string;
 }
 
+// Initialiser Resend avec la clé API
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 /**
- * Envoyer un email via l'API backend
+ * Envoyer un email via Resend
  */
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch('/api/email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(options)
+    const { data, error } = await resend.emails.send({
+      from: "GlobalArtPro <verification@mail.globalartpro.com>",
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return { success: false, error: data.error || 'Erreur lors de l\'envoi' };
+    if (error) {
+      console.error('Erreur Resend:', error);
+      return { success: false, error: error.message };
     }
 
+    console.log('Email envoyé avec succès:', data);
     return { success: true };
   } catch (error) {
     console.error('Erreur envoi email:', error);
