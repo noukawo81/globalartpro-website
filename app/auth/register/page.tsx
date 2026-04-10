@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import EmailVerification from '@/components/security/EmailVerification';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,6 +17,8 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) router.replace('/dashboard');
@@ -38,11 +41,34 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (result.success) {
-      router.replace('/dashboard');
+      if (result.requiresEmailVerification) {
+        setUnverifiedEmail(email);
+        setShowEmailVerification(true);
+      } else {
+        router.replace('/dashboard');
+      }
     } else {
       setError(result.message);
     }
   };
+
+  const handleEmailVerified = (verified: boolean) => {
+    if (verified) {
+      setShowEmailVerification(false);
+      router.replace('/dashboard');
+    }
+  };
+
+  if (showEmailVerification) {
+    return (
+      <EmailVerification
+        email={unverifiedEmail}
+        onVerified={handleEmailVerified}
+        onClose={() => setShowEmailVerification(false)}
+        isRequired={true}
+      />
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 via-black to-slate-900 text-white flex items-center justify-center p-4">

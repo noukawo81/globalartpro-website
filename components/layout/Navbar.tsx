@@ -35,8 +35,20 @@ export default function Navbar() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isPiBrowser, setIsPiBrowser] = useState(false);
   const { user: authUser, isAuthenticated, logout: authLogout, isAdmin } = useAuth();
   const { user: piUser, isLoading, login } = usePi();
+
+  // Détect Pi Browser
+  useEffect(() => {
+    const checkPiBrowser = () => {
+      setIsPiBrowser(typeof window !== 'undefined' && !!window.Pi);
+    };
+    checkPiBrowser();
+    // Re-check après un délai pour s'assurer que le SDK s'est chargé
+    const timer = setTimeout(checkPiBrowser, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Détect scroll pour effect glassmorphism amélioré
   useEffect(() => {
@@ -129,7 +141,7 @@ export default function Navbar() {
             {/* Desktop Right Actions */}
             <div className="flex items-center gap-3">
               {!isAuthenticated ? (
-                // VISITEUR: Connexion + Inscription uniquement
+                // VISITEUR: Connexion + Inscription + Pi (si Pi Browser)
                 <>
                   <Link
                     href="/auth/login"
@@ -153,6 +165,27 @@ export default function Navbar() {
                   >
                     Inscription
                   </Link>
+                  {isPiBrowser && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={login}
+                      disabled={isLoading}
+                      className="hidden md:flex items-center gap-2 px-4 py-2 text-white font-bold bg-blue-600/60 border border-blue-500/60 rounded-md hover:bg-blue-500/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Connexion Pi...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-lg">π</span>
+                          <span>Login Pi</span>
+                        </>
+                      )}
+                    </motion.button>
+                  )}
                 </>
               ) : (
                 // CONNECTÉ: Username + Don + Admin (si admin) + Déconnexion
@@ -289,59 +322,6 @@ export default function Navbar() {
                   </motion.button>
                 </Link>
               ))}
-
-              <div className="pt-4 border-t border-blue-500/10 space-y-2">
-                {!isAuthenticated ? (
-                  <>
-                    <Link href="/auth/login" aria-current={isActive('/auth/login') ? 'page' : undefined}>
-                      <motion.button
-                        whileHover={{ x: 10 }}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                          isActive('/auth/login')
-                            ? 'text-white bg-blue-600/20 border border-blue-500/50 shadow-lg shadow-blue-500/20'
-                            : 'text-white hover:text-blue-200 hover:bg-blue-500/5 border border-blue-500/20'
-                        }`}
-                      >
-                        Connexion
-                      </motion.button>
-                    </Link>
-                    <Link href="/auth/register" aria-current={isActive('/auth/register') ? 'page' : undefined}>
-                      <motion.button
-                        whileHover={{ x: 10 }}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                          isActive('/auth/register')
-                            ? 'text-blue-200 bg-blue-600/25 border border-blue-500/50 shadow-lg shadow-blue-500/20'
-                            : 'text-gray-200 hover:text-blue-200 border border-blue-500/20 hover:bg-blue-500/5'
-                        }`}
-                      >
-                        Inscription
-                      </motion.button>
-                    </Link>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={login}
-                      disabled={isLoading}
-                      className="w-full px-4 py-3 text-white font-bold bg-blue-600/80 border border-blue-500/50 rounded-lg hover:bg-blue-500/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Connexion...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">π</span>
-                          Pi
-                        </div>
-                      )}
-                    </motion.button>
-
-                  </>
-                ) : (
-                  <></>
-                )}
-              </div>
             </div>
           </motion.div>
         )}

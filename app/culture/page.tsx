@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 // Types
 interface Publication {
@@ -454,35 +456,99 @@ const CulturalFeed = () => {
 };
 
 const VipSalon = () => {
+  const router = useRouter();
+  const { user } = useAuth();
   const [isAccessing, setIsAccessing] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState<'USD'|'USDT'|'PI'|'ARTC'>('PI');
+  const [isPiBrowser, setIsPiBrowser] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState<'PI'|'ARTC'>('PI');
 
   const paymentRates = {
-    USD: 0.15,
-    USDT: 0.15,
     PI: 0.0005,
     ARTC: 0.4
   };
 
-  // Taux de conversion par rapport au PI (1 PI = X devise)
   const conversionRates = {
-    USD: 300,    // 1 PI = 300 USD
-    USDT: 300,   // 1 PI = 300 USDT
-    PI: 1,       // 1 PI = 1 PI
-    ARTC: 2.5    // 1 PI = 2.5 ARTC
+    PI: 1,
+    ARTC: 2.5
   };
 
   const costInSelected = paymentRates[selectedCurrency];
   const piCost = paymentRates.PI;
   const convertedAmount = piCost * conversionRates[selectedCurrency];
 
-  const handleVipAccess = () => {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userAgent = navigator.userAgent || '';
+      setIsPiBrowser(/PiBrowser/i.test(userAgent));
+    }
+  }, []);
+
+  const handleVipAccess = async () => {
+    setPaymentError('');
     setIsAccessing(true);
-    // Simulation d'accès VIP
-    setTimeout(() => setIsAccessing(false), 2000);
+
+    if (typeof window === 'undefined' || !(window as any).Pi || !isPiBrowser) {
+      setPaymentError('Le paiement Pi nécessite le Pi Browser.');
+      setIsAccessing(false);
+      return;
+    }
+
+    try {
+      (window as any).Pi.createPayment({
+        amount: piCost,
+        memo: 'Offrande pour le Sanctuaire VIP',
+        onReadyForServerApproval: async ({ paymentId }: { paymentId: string }) => {
+          await fetch('/api/pi/payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'approve',
+              paymentId,
+              amount: piCost,
+              memo: 'Offrande pour le Sanctuaire VIP',
+              userEmail: user?.email
+            })
+          });
+        },
+        onReadyForServerCompletion: async ({ paymentId, txid }: { paymentId: string; txid: string }) => {
+          const response = await fetch('/api/pi/payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'complete',
+              paymentId,
+              txid,
+              userEmail: user?.email
+            })
+          });
+
+          if (response.ok) {
+            router.push('/sanctuaire-vip');
+          } else {
+            const errorData = await response.json();
+            setPaymentError(errorData.error || 'Erreur lors de la validation du paiement.');
+          }
+          setIsAccessing(false);
+        },
+        onCancel: () => {
+          setPaymentError('Paiement annulé.');
+          setIsAccessing(false);
+        },
+        onError: (err: any) => {
+          console.error('Pi payment error:', err);
+          setPaymentError('Erreur du paiement Pi. Veuillez réessayer.');
+          setIsAccessing(false);
+        }
+      });
+    } catch (error) {
+      console.error('Erreur création paiement Pi:', error);
+      setPaymentError('Impossible d’initier le paiement.');
+      setIsAccessing(false);
+    }
   };
 
-  const handleCurrencyChange = (currency: 'USD'|'USDT'|'PI'|'ARTC') => {
+  const handleCurrencyChange = (currency: 'PI'|'ARTC') => {
     setSelectedCurrency(currency);
   };
 
@@ -570,8 +636,8 @@ const VipSalon = () => {
             >
               <div className="bg-gradient-to-r from-gold-900/50 to-purple-900/50 p-6 rounded-lg border border-gold-500/50 mb-6">
                 <h4 className="text-xl font-semibold text-white mb-2">Accès Spirituel</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-                    {(['USD','USDT','PI','ARTC'] as const).map(currency => (
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {(['PI','ARTC'] as const).map(currency => (
                       <button
                         key={currency}
                         onClick={() => handleCurrencyChange(currency)}
@@ -588,10 +654,10 @@ const VipSalon = () => {
                       <span className="text-xl text-white">{selectedCurrency}</span>
                     </div>
                     <div className="text-gray-300 text-xs mb-2">
-                      Équivalent: {convertedAmount.toFixed(3)} {selectedCurrency} (0.0005 PI × {conversionRates[selectedCurrency]})
+                      Équivalent: {convertedAmount.toFixed(3)} {selectedCurrency}
                     </div>
-                    <div className="text-gray-300 text-xs">1 PI = {conversionRates.USD} USD/USDT, 1 PI = {conversionRates.ARTC} ARTC</div>
                     <p className="text-gray-300 text-sm">Offrande pour l'entrée dans le sanctuaire</p>
+                    <p className="mt-4 text-xs text-gray-400">Les transactions en Pi sont définitives sur la blockchain.</p>
                   </div>
                 </div>
 
@@ -621,6 +687,9 @@ const VipSalon = () => {
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </motion.button>
+              {paymentError && (
+                <p className="mt-4 text-sm text-red-300">{paymentError}</p>
+              )}
             </motion.div>
           </motion.div>
         </div>

@@ -1,111 +1,170 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Types pour les paiements Pi
 interface PiPaymentData {
   paymentId: string;
   txid?: string;
   amount: number;
   memo: string;
-  user_uid: string;
+  userEmail?: string;
+  userId?: string;
+  user_uid?: string;
   timestamp: number;
 }
 
-// Stockage temporaire (en production, utiliser une base de données)
-let pendingPayments = new Map<string, PiPaymentData>();
+const pendingPayments = new Map<string, PiPaymentData>();
+
+async function getPrismaClient() {
+  try {
+    const { PrismaClient } = await import('@prisma/client');
+    const globalWithPrisma = globalThis as typeof globalThis & { prisma?: any };
+    if (!globalWithPrisma.prisma) {
+      globalWithPrisma.prisma = new PrismaClient();
+    }
+    return globalWithPrisma.prisma;
+  } catch (error) {
+    console.warn('[PI PAYMENT] Prisma client unavailable:', error);
+    return null;
+  }
+}
+
+async function verifyPiPayment(paymentId: string) {
+  // TODO: Remplacer par la vérification réelle du SDK serveur Pi.
+  // Exemple : const { PiServer } = await import('@pi/sdk');
+  // return PiServer.verifyPayment(paymentId);
+  return Boolean(paymentId);
+}
+
+async function updateUserToVip(prisma: any, payment: PiPaymentData) {
+  const identifier = payment.userId || payment.user_uid;
+
+  if (payment.userEmail) {
+    return prisma.user.update({
+      where: { email: payment.userEmail },
+      data: { isVip: true },
+    });
+  }
+
+  if (!identifier) {
+    throw new Error('Missing user identifier for VIP update');
+  }
+
+  try {
+    return await prisma.user.update({
+      where: { id: identifier },
+      data: { isVip: true },
+    });
+  } catch (firstError) {
+    console.warn('[PI PAYMENT] Update by id failed, trying uid');
+    return prisma.user.update({
+      where: { uid: identifier },
+      data: { isVip: true },
+    });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, paymentId, txid, amount, memo, user_uid } = body;
+    const { action, paymentId, txid, amount, memo, userEmail, userId, user_uid } = body;
+
+    if (!paymentId) {
+      return NextResponse.json({ error: 'paymentId manquant' }, { status: 400 });
+    }
 
     switch (action) {
-      case 'approve':
-        // Stocker le paiement en attente d'approbation
+      case 'approve': {
+        if (typeof amount !== 'number' || !memo) {
+          return NextResponse.json({ error: 'Montant et mémo requis pour l’approbation' }, { status: 400 });
+        }
+
         const paymentData: PiPaymentData = {
           paymentId,
           amount,
           memo,
+          userEmail,
+          userId,
           user_uid,
           timestamp: Date.now(),
         };
+
         pendingPayments.set(paymentId, paymentData);
+        console.log('[PI PAYMENT] Server approval stored for payment:', paymentData);
 
-        console.log(`[PI PAYMENT] Payment ${paymentId} ready for approval:`, paymentData);
+        return NextResponse.json({ success: true, message: 'Server approval enregistré.' });
+      }
 
-        // Ici, vous pouvez ajouter une logique métier pour valider le paiement
-        // Par exemple, vérifier si l'utilisateur a assez de fonds, etc.
+      case 'complete': {
+        let paymentData = pendingPayments.get(paymentId);
 
-        return NextResponse.json({
-          success: true,
-          message: 'Payment approved and stored for completion',
-        });
+        if (!paymentData) {
+          if (!amount || !memo || (!userEmail && !userId && !user_uid)) {
+            return NextResponse.json({ error: 'Données de paiement manquantes pour compléter le paiement' }, { status: 400 });
+          }
 
-      case 'complete':
-        // Marquer le paiement comme terminé
-        const pendingPayment = pendingPayments.get(paymentId);
-        if (!pendingPayment) {
-          return NextResponse.json(
-            { error: 'Payment not found' },
-            { status: 404 }
-          );
+          paymentData = {
+            paymentId,
+            amount,
+            memo,
+            userEmail,
+            userId,
+            user_uid,
+            timestamp: Date.now(),
+          };
         }
 
-        // Mettre à jour avec la transaction ID
-        pendingPayment.txid = txid;
-        pendingPayments.set(paymentId, pendingPayment);
+        const paymentValid = await verifyPiPayment(paymentId);
+        if (!paymentValid) {
+          return NextResponse.json({ error: 'Paiement Pi invalide ou non vérifié' }, { status: 400 });
+        }
 
-        console.log(`[PI PAYMENT] Payment ${paymentId} completed with txid: ${txid}`);
+        paymentData.txid = txid;
+        pendingPayments.set(paymentId, paymentData);
 
-        // Ici, créditer le compte utilisateur, envoyer des notifications, etc.
-        // Par exemple:
-        // - Créditer ARTC à l'utilisateur
-        // - Envoyer email de confirmation
-        // - Mettre à jour l'historique des transactions
+        const prisma = await getPrismaClient();
+        if (!prisma) {
+          return NextResponse.json({ error: 'Prisma non initialisé' }, { status: 500 });
+        }
 
+        try {
+          await updateUserToVip(prisma, paymentData);
+        } catch (error) {
+          console.error('[PI PAYMENT] Erreur mise à jour VIP :', error);
+          return NextResponse.json({ error: 'Impossible d’activer le statut VIP' }, { status: 500 });
+        }
+
+        console.log(`[PI PAYMENT] Payment ${paymentId} completed, VIP activated.`);
         return NextResponse.json({
           success: true,
-          message: 'Payment completed successfully',
+          message: 'Paiement finalisé et statut VIP activé.',
           transaction: {
             id: txid,
-            amount: pendingPayment.amount,
-            memo: pendingPayment.memo,
-            timestamp: pendingPayment.timestamp,
+            amount: paymentData.amount,
+            memo: paymentData.memo,
+            timestamp: paymentData.timestamp,
           },
         });
+      }
 
       default:
-        return NextResponse.json(
-          { error: 'Invalid action' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Action non reconnue' }, { status: 400 });
     }
   } catch (error) {
     console.error('[PI PAYMENT] Error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }
 
 export async function GET(request: NextRequest) {
-  // Endpoint pour vérifier le statut des paiements
   const { searchParams } = new URL(request.url);
   const paymentId = searchParams.get('paymentId');
 
   if (!paymentId) {
-    return NextResponse.json(
-      { error: 'Payment ID required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Payment ID required' }, { status: 400 });
   }
 
   const payment = pendingPayments.get(paymentId);
   if (!payment) {
-    return NextResponse.json(
-      { error: 'Payment not found' },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
   }
 
   return NextResponse.json({
