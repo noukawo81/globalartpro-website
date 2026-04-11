@@ -9,12 +9,23 @@ import ReferralCard from '@/components/referral/ReferralCard';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { user: piUser } = usePi();
+  const { user: piUser, login, rewardPiUser, isLoading } = usePi();
 
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.6 },
+  };
+
+  const handlePiLogin = async () => {
+    try {
+      await login();
+      if (user?.email && piUser?.username) {
+        await rewardPiUser(user.email, piUser.username);
+      }
+    } catch (error) {
+      console.error('Pi login failed:', error);
+    }
   };
 
   return (
@@ -27,7 +38,7 @@ export default function Dashboard() {
             className="mb-8"
           >
             <h1 className="text-4xl sm:text-5xl font-bold mb-2">
-              Bienvenue, {user?.username || 'Artiste'} 
+              Bienvenue, {piUser?.username || user?.username || 'Artiste'} 
             </h1>
             <p className="text-gray-400">Accédez à votre espace de création et de monétisation</p>
           </motion.div>
@@ -205,15 +216,20 @@ export default function Dashboard() {
                 <p className="text-gray-400 mb-4">
                   Utilisez Pi Network pour des paiements sécurisés et des revenus en crypto-monnaie.
                 </p>
-                <a
-                  href="https://globalartproadac3428.pinet.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-all"
-                >
-                  Accéder à Pi Network
-                  <span>→</span>
-                </a>
+                {piUser ? (
+                  <div className="text-green-400 font-semibold">
+                    Connecté en tant que {piUser.username}
+                  </div>
+                ) : (
+                  <button
+                    onClick={handlePiLogin}
+                    disabled={isLoading}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-all disabled:opacity-50"
+                  >
+                    {isLoading ? 'Connexion...' : 'Accéder à Pi Network'}
+                    <span>→</span>
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>

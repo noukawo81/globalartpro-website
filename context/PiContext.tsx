@@ -19,6 +19,7 @@ interface PiContextType {
   isLoading: boolean;
   login: () => Promise<void>;
   logout: () => void;
+  rewardPiUser: (email: string, piUsername: string) => Promise<void>;
   createPayment: (amount: number, memo: string, metadata?: any) => Promise<any>;
 }
 
@@ -94,10 +95,23 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('pi_user');
-    localStorage.removeItem('pi_access_token');
+  const rewardPiUser = async (email: string, piUsername: string) => {
+    try {
+      const response = await fetch('/api/pi/reward', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, piUsername }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to reward Pi user');
+      } else {
+        console.log('Pi user rewarded');
+      }
+    } catch (error) {
+      console.error('Error rewarding Pi user:', error);
+    }
+  };
   };
 
   const createPayment = async (amount: number, memo: string, metadata: any = {}) => {
@@ -221,6 +235,7 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     login,
     logout,
+    rewardPiUser,
     createPayment,
   };
 
