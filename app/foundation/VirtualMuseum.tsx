@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense, useRef, useEffect, FormEvent } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Text, Html, Environment, ContactShadows, PerspectiveCamera, Plane } from '@react-three/drei';
+import { OrbitControls, Text, Html, ContactShadows, PerspectiveCamera, Plane } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 

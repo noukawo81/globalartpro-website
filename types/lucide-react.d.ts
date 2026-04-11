@@ -34,5 +34,12 @@ declare module 'lucide-react' {
   export const Ban: React.FC<IconProps>;
   export const Activity: React.FC<IconProps>;
   export const Lock: React.FC<IconProps>;
+  export const Search: React.FC<IconProps>;
+  export const Menu: React.FC<IconProps>;
+  export const Home: React.FC<IconProps>;
+  export const Compass: React.FC<IconProps>;
+  export const Plus: React.FC<IconProps>;
+  export const User: React.FC<IconProps>;
+  export const WandSparkles: React.FC<IconProps>;
 }
 

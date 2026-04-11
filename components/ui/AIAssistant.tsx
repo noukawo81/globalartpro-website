@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { WandSparkles } from 'lucide-react';
 import { GlobalArtProKnowledge } from '@/lib/ai-brain';
 
 export default function AIAssistant() {
@@ -72,7 +73,10 @@ export default function AIAssistant() {
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 20, x: 10, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, x: 10, scale: 0.96 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
             className="mb-4 w-80 h-96 bg-black/90 border border-gold-500/30 rounded-3xl backdrop-blur-xl flex flex-col overflow-hidden shadow-2xl"
           >
             <div className="p-4 border-b border-gold-500/20 bg-gold-500/10 text-gold-400 font-bold text-xs tracking-widest uppercase">
@@ -115,19 +119,30 @@ export default function AIAssistant() {
           </motion.div>
         )}
       </AnimatePresence>
-      <button 
+      <motion.button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-16 h-16 bg-gold-500 rounded-full flex items-center justify-center text-white shadow-[0_20px_40px_rgba(250,204,21,0.35)] hover:scale-105 transition-transform"
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.96 }}
+        className="relative w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-sky-500 shadow-[0_20px_60px_-30px_rgba(99,102,241,0.9)] text-white ring-1 ring-white/20 transition-all hover:shadow-[0_0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-300"
+        style={{ animation: 'fabPulse 2.8s ease-in-out infinite' }}
         aria-label={isOpen ? 'Fermer l’assistante IA' : 'Ouvrir l’assistante IA'}
       >
-        {isOpen ? (
-          <span className="text-xl">✕</span>
-        ) : (
-          <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white">
-            <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 2-8 5-8-5h16Zm-16 12V8.24l7.6 4.75a1 1 0 0 0 1 0L20 8.24V18H4Z" />
-          </svg>
+        <WandSparkles className="w-7 h-7" />
+        <span className="absolute top-2 right-2 h-3.5 w-3.5 rounded-full bg-emerald-400 border border-white/90 ring-1 ring-white/80" />
+        {isOpen && (
+          <span className="absolute inset-0 rounded-full bg-white/10" />
         )}
-      </button>
+      </motion.button>
+      <style jsx>{`
+        @keyframes fabPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.04); }
+        }
+      `}</style>
     </div>
   );
 }

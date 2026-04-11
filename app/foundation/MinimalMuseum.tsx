@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, PerspectiveCamera } from '@react-three/drei';
+import { OrbitControls, ContactShadows, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 
 function MinimalMuseumScene() {
@@ -22,8 +22,8 @@ function MinimalMuseumScene() {
         maxPolarAngle={Math.PI / 2}
       />
 
-      {/* Environnement HD blanc */}
-      <Environment preset="studio" background={false} />
+      {/* Background color and lights instead of remote HDR environment */}
+      <color attach="background" args={["#f8f8f8"]} />
 
       {/* Sol réfléchissant */}
       <ContactShadows

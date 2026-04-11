@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
 import Navbar from "@/components/layout/Navbar";
+import MobileHeader from "@/components/layout/MobileHeader";
+import BottomNav from "@/components/layout/BottomNav";
 import { PiProvider } from "@/context/PiContext";
 import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
@@ -37,20 +39,28 @@ export default function RootLayout({
         <Script
           src="https://sdk.minepi.com/pi-sdk.js"
           strategy="beforeInteractive"
-          onLoad={() => {
-            console.log('Pi SDK loaded');
-          }}
         />
       </head>
       <body className="min-h-full flex flex-col bg-black">
         <AuthProvider>
           <PiProvider>
-            <Suspense fallback={<div className="h-20 sm:h-24 bg-gray-900" />}>
-              <Navbar />
-            </Suspense>
-            <main className="pt-16 sm:pt-20">
+            {/* Desktop Navbar */}
+            <div className="hidden md:block">
+              <Suspense fallback={<div className="h-20 bg-gray-900" />}>
+                <Navbar />
+              </Suspense>
+            </div>
+
+            {/* Mobile Header */}
+            <MobileHeader />
+            
+            <main className="pt-16 sm:pt-20 md:pt-16 pb-16 md:pb-0 flex-1">
               {children}
             </main>
+            
+            {/* Mobile Bottom Navigation */}
+            <BottomNav />
+            
             <Suspense fallback={null}>
               <AIAssistant />
             </Suspense>
