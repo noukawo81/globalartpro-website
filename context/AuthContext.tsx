@@ -14,6 +14,7 @@ interface User {
   totalReferrals?: number;
   artcFromReferrals?: number;
   emailVerified?: boolean;
+  emailVerifiedAt?: string;
   securityFlags?: {
     highRisk: boolean;
     blockedUntil?: string;
@@ -40,6 +41,7 @@ interface AuthContextType {
   setSupporterStatus: (status: boolean) => void;
   updateArtcBalance: (username: string, amount: number) => void;
   verifyEmail: (code: string) => Promise<{ success: boolean; message: string }>;
+  verifyEmailByCode: (email: string, code: string) => Promise<{ success: boolean; message: string }>;
   resendVerificationEmail: () => Promise<{ success: boolean; message: string }>;
   checkSecurityStatus: () => Promise<void>;
 }
@@ -73,6 +75,41 @@ function getUsersFromStorage(): Array<any> {
 
 function setUsersToStorage(users: Array<any>) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function markUserEmailVerified(email: string): boolean {
+  const users = getUsersFromStorage();
+  const normalizedEmail = email.toLowerCase();
+  const userIndex = users.findIndex((u) => u.email?.toLowerCase() === normalizedEmail);
+
+  if (userIndex === -1) {
+    return false;
+  }
+
+  const targetUser = users[userIndex];
+
+  if (!targetUser.emailVerified) {
+    targetUser.emailVerified = true;
+    targetUser.emailVerifiedAt = new Date().toISOString();
+    targetUser.artcBalance = (targetUser.artcBalance || 0) + 2;
+
+    if (targetUser.pendingReferralBy) {
+      const referrer = users.find((u) => u.referralCode === targetUser.pendingReferralBy);
+      if (referrer) {
+        targetUser.referredBy = targetUser.pendingReferralBy;
+        delete targetUser.pendingReferralBy;
+
+        referrer.artcBalance = (referrer.artcBalance || 0) + 10;
+        referrer.artcFromReferrals = (referrer.artcFromReferrals || 0) + 10;
+        referrer.totalReferrals = (referrer.totalReferrals || 0) + 1;
+      }
+    }
+
+    setUsersToStorage(users);
+    return true;
+  }
+
+  return true;
 }
 
 function getCurrentUserFromStorage(): User | null {
@@ -288,28 +325,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, message: 'Aucun utilisateur connecté.' };
     }
 
-    const verified = await verifyEmailCode(user.email, code);
+    return await verifyEmailByCode(user.email, code);
+  };
+
+  const verifyEmailByCode = async (email: string, code: string): Promise<{ success: boolean; message: string }> => {
+    const verified = await verifyEmailCode(email, code);
     if (!verified) {
       return { success: false, message: emailVerification.error || 'Code de vérification incorrect.' };
     }
 
-    // Activer le compte utilisateur
     const users = getUsersFromStorage();
-    const userIndex = users.findIndex((u) => u.email.toLowerCase() === user.email.toLowerCase());
+    const userIndex = users.findIndex((u) => u.email.toLowerCase() === email.toLowerCase());
 
-    if (userIndex !== -1) {
-      const targetUser = users[userIndex];
+    if (userIndex === -1) {
+      return { success: false, message: 'Utilisateur introuvable.' };
+    }
+
+    const targetUser = users[userIndex];
+
+    if (!targetUser.emailVerified) {
       targetUser.emailVerified = true;
-      targetUser.artcBalance = 2; // Bonus de bienvenue
+      targetUser.emailVerifiedAt = new Date().toISOString();
+      targetUser.artcBalance = (targetUser.artcBalance || 0) + 2;
 
-      // Appliquer le parrainage en attente
       if (targetUser.pendingReferralBy) {
         const referrer = users.find((u) => u.referralCode === targetUser.pendingReferralBy);
         if (referrer) {
           targetUser.referredBy = targetUser.pendingReferralBy;
           delete targetUser.pendingReferralBy;
 
-          // Récompenser le parrain
           referrer.artcBalance = (referrer.artcBalance || 0) + 10;
           referrer.artcFromReferrals = (referrer.artcFromReferrals || 0) + 10;
           referrer.totalReferrals = (referrer.totalReferrals || 0) + 1;
@@ -317,17 +361,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setUsersToStorage(users);
-
-      // Mettre à jour l'utilisateur en session
-      const updatedUser = {
-        ...user,
-        emailVerified: true,
-        artcBalance: targetUser.artcBalance,
-        referredBy: targetUser.referredBy
-      };
-      setUser(updatedUser);
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
     }
+
+    const updatedUser: User = {
+      username: targetUser.username,
+      email: targetUser.email,
+      isSupporter: targetUser.isSupporter,
+      isAdmin: targetUser.isAdmin || targetUser.email === 'admin@globalartpro.com',
+      referralCode: targetUser.referralCode,
+      referredBy: targetUser.referredBy,
+      artcBalance: targetUser.artcBalance || 0,
+      artcFromReferrals: targetUser.artcFromReferrals || 0,
+      totalReferrals: targetUser.totalReferrals || 0,
+      emailVerified: true,
+      emailVerifiedAt: targetUser.emailVerifiedAt,
+      securityFlags: targetUser.securityFlags
+    };
+
+    setUser(updatedUser);
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
 
     return { success: true, message: 'Email vérifié avec succès! Bienvenue sur GlobalArtPro.' };
   };
@@ -387,6 +439,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSupporterStatus,
     updateArtcBalance,
     verifyEmail,
+    verifyEmailByCode,
     resendVerificationEmail,
     checkSecurityStatus
   };

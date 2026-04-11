@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Mail, CheckCircle, XCircle, AlertTriangle, Clock, Lock } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface EmailVerificationProps {
   email: string;
@@ -26,6 +27,7 @@ export default function EmailVerification({
   onClose,
   isRequired = true
 }: EmailVerificationProps) {
+  const { verifyEmailByCode } = useAuth();
   const [state, setState] = useState<VerificationState>({
     status: 'idle',
     code: '',
@@ -109,19 +111,9 @@ export default function EmailVerification({
     setState(prev => ({ ...prev, status: 'verifying', error: '' }));
 
     try {
-      const response = await fetch('/api/security', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'verify_email',
-          email,
-          verificationCode: state.code
-        })
-      });
+      const verified = await verifyEmailByCode(email, state.code);
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (verified) {
         setState(prev => ({ ...prev, status: 'verified' }));
         onVerified(true);
 
@@ -133,13 +125,9 @@ export default function EmailVerification({
         setState(prev => ({
           ...prev,
           status: 'sent',
-          error: data.error || 'Code incorrect',
-          attemptsLeft: data.attemptsLeft || prev.attemptsLeft - 1
+          error: 'Code incorrect',
+          attemptsLeft: Math.max(0, state.attemptsLeft - 1)
         }));
-
-        if (data.attemptsLeft === 0) {
-          onVerified(false);
-        }
       }
     } catch (error) {
       setState(prev => ({

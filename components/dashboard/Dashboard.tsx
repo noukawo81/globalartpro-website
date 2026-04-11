@@ -27,7 +27,7 @@ export default function Dashboard() {
             className="mb-8"
           >
             <h1 className="text-4xl sm:text-5xl font-bold mb-2">
-              Bienvenue, {user?.username || 'Artiste'} 🎨
+              Bienvenue, {user?.username || 'Artiste'} 
             </h1>
             <p className="text-gray-400">Accédez à votre espace de création et de monétisation</p>
           </motion.div>
