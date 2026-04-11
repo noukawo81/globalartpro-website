@@ -17,7 +17,7 @@ interface PiContextType {
   user: PiUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: () => Promise<void>;
+  login: (email?: string) => Promise<void>;
   logout: () => void;
   rewardPiUser: (email: string, piUsername: string) => Promise<void>;
   createPayment: (amount: number, memo: string, metadata?: any) => Promise<any>;
@@ -65,7 +65,7 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async () => {
+  const login = async (email?: string) => {
     if (!window.Pi) {
       throw new Error('Pi SDK not loaded');
     }
@@ -85,6 +85,11 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
       setUser(piUser);
       localStorage.setItem('pi_user', JSON.stringify(piUser));
       localStorage.setItem('pi_access_token', auth.accessToken);
+
+      // Récompenser si email fourni
+      if (email) {
+        await rewardPiUser(email, piUser.username);
+      }
 
       console.log('Pi authentication successful:', piUser);
     } catch (error) {
@@ -112,6 +117,11 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
       console.error('Error rewarding Pi user:', error);
     }
   };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('pi_user');
+    localStorage.removeItem('pi_access_token');
   };
 
   const createPayment = async (amount: number, memo: string, metadata: any = {}) => {

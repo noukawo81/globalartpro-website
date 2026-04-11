@@ -19,10 +19,7 @@ export default function Dashboard() {
 
   const handlePiLogin = async () => {
     try {
-      await login();
-      if (user?.email && piUser?.username) {
-        await rewardPiUser(user.email, piUser.username);
-      }
+      await login(user?.email);
     } catch (error) {
       console.error('Pi login failed:', error);
     }

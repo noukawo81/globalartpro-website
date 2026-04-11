@@ -37,6 +37,9 @@ export default function RootLayout({
         <Script
           src="https://sdk.minepi.com/pi-sdk.js"
           strategy="beforeInteractive"
+          onLoad={() => {
+            console.log('Pi SDK loaded');
+          }}
         />
       </head>
       <body className="min-h-full flex flex-col bg-black">

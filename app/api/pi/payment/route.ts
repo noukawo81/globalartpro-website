@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import clientPromise from '@/lib/mongodb';
 
 interface PiPaymentData {
   paymentId: string;
@@ -13,18 +14,8 @@ interface PiPaymentData {
 
 const pendingPayments = new Map<string, PiPaymentData>();
 
-async function getPrismaClient() {
-  try {
-    const { PrismaClient } = await import('@prisma/client');
-    const globalWithPrisma = globalThis as typeof globalThis & { prisma?: any };
-    if (!globalWithPrisma.prisma) {
-      globalWithPrisma.prisma = new PrismaClient();
-    }
-    return globalWithPrisma.prisma;
-  } catch (error) {
-    console.warn('[PI PAYMENT] Prisma client unavailable:', error);
-    return null;
-  }
+async function getMongoClient() {
+  return await clientPromise;
 }
 
 async function verifyPiPayment(paymentId: string) {
@@ -34,32 +25,25 @@ async function verifyPiPayment(paymentId: string) {
   return Boolean(paymentId);
 }
 
-async function updateUserToVip(prisma: any, payment: PiPaymentData) {
+async function updateUserToVip(client: any, payment: PiPaymentData) {
+  const db = client.db('globalartpro'); // Ajustez le nom de la DB si nécessaire
   const identifier = payment.userId || payment.user_uid;
 
   if (payment.userEmail) {
-    return prisma.user.update({
-      where: { email: payment.userEmail },
-      data: { isVip: true },
-    });
+    return db.collection('users').updateOne(
+      { email: payment.userEmail },
+      { $set: { isVip: true } }
+    );
   }
 
   if (!identifier) {
     throw new Error('Missing user identifier for VIP update');
   }
 
-  try {
-    return await prisma.user.update({
-      where: { id: identifier },
-      data: { isVip: true },
-    });
-  } catch (firstError) {
-    console.warn('[PI PAYMENT] Update by id failed, trying uid');
-    return prisma.user.update({
-      where: { uid: identifier },
-      data: { isVip: true },
-    });
-  }
+  return db.collection('users').updateOne(
+    { uid: identifier },
+    { $set: { isVip: true } }
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -120,13 +104,10 @@ export async function POST(request: NextRequest) {
         paymentData.txid = txid;
         pendingPayments.set(paymentId, paymentData);
 
-        const prisma = await getPrismaClient();
-        if (!prisma) {
-          return NextResponse.json({ error: 'Prisma non initialisé' }, { status: 500 });
-        }
+        const client = await getMongoClient();
 
         try {
-          await updateUserToVip(prisma, paymentData);
+          await updateUserToVip(client, paymentData);
         } catch (error) {
           console.error('[PI PAYMENT] Erreur mise à jour VIP :', error);
           return NextResponse.json({ error: 'Impossible d’activer le statut VIP' }, { status: 500 });

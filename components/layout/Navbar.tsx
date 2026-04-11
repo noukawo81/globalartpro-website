@@ -169,7 +169,7 @@ export default function Navbar() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={login}
+                      onClick={() => login()}
                       disabled={isLoading}
                       className="hidden md:flex items-center gap-2 px-4 py-2 text-white font-bold bg-blue-600/60 border border-blue-500/60 rounded-md hover:bg-blue-500/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
