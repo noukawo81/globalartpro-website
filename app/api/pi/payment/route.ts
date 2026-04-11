@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 
@@ -15,7 +17,12 @@ interface PiPaymentData {
 const pendingPayments = new Map<string, PiPaymentData>();
 
 async function getMongoClient() {
-  return await clientPromise;
+  try {
+    return await clientPromise;
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    throw new Error('Database connection failed');
+  }
 }
 
 async function verifyPiPayment(paymentId: string) {
