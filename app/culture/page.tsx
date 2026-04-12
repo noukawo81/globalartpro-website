@@ -517,34 +517,27 @@ const VipSalon = () => {
     setPaymentError('');
     setIsAccessing(true);
 
-    if (typeof window === 'undefined' || !isPiBrowserAvailable()) {
-      setPaymentError('Le paiement Pi nécessite le Pi Browser.');
-      setIsAccessing(false);
-      return;
-    }
-
-    const currentOrigin = getCurrentOrigin();
-    const expectedOrigin = process.env.NEXT_PUBLIC_PI_APP_URL;
-    if (expectedOrigin && expectedOrigin !== currentOrigin) {
-      setPaymentError(`URL de l'application Pi incorrecte. Vérifiez que ${currentOrigin} correspond à l'URL enregistrée dans le Pi Developer Portal.`);
-      setIsAccessing(false);
-      return;
-    }
-
     try {
+      if (typeof window === 'undefined' || !isPiBrowserAvailable()) {
+        throw new Error('Le paiement Pi nécessite le Pi Browser. Veuillez utiliser le Pi Browser pour accéder au Sanctuaire VIP.');
+      }
+
+      const currentOrigin = getCurrentOrigin();
+      const expectedOrigin = process.env.NEXT_PUBLIC_PI_APP_URL;
+      if (expectedOrigin && expectedOrigin !== currentOrigin) {
+        throw new Error(`URL incorrecte. Domaine actuel: ${currentOrigin}, attendu: ${expectedOrigin}`);
+      }
+
+      console.log('[VIP] Authenticating with Pi...');
       await authenticateWithPi();
-    } catch (authError: any) {
-      console.error('Pi authentication failed:', authError);
-      setPaymentError('Connexion Pi nécessaire avant de lancer le paiement.');
-      setIsAccessing(false);
-      return;
-    }
+      console.log('[VIP] Authentication successful, initiating payment...');
 
-    try {
-      (window as any).Pi.createPayment({
+      const pi = (window as any).Pi;
+      const payment = await pi.createPayment({
         amount: piCost,
         memo: 'Offrande pour le Sanctuaire VIP',
         onReadyForServerApproval: async ({ paymentId }: { paymentId: string }) => {
+          console.log('[VIP] Payment approved, sending to server:', paymentId);
           await fetch('/api/pi/payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

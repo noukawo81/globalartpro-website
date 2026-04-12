@@ -26,9 +26,115 @@ export default function NFTCard({ nft }: NFTCardProps) {
     router.push(`/artists`);
   };
 
-  const handleBuy = (paymentMethod: typeof PAYMENT_OPTIONS[number]['method']) => {
+  const handleBuy = async (paymentMethod: typeof PAYMENT_OPTIONS[number]['method']) => {
     setIsDropdownOpen(false);
-    alert(`Achat de ${nft.title} via ${paymentMethod}. Prix affiché : ${nft.price} ${nft.priceType}.`);
+    
+    try {
+      if (paymentMethod === 'Pi') {
+        const pi = (window as any).Pi;
+        if (!pi) {
+          console.error('Pi SDK non chargé');
+          alert('Erreur: SDK Pi non disponible. Réactualisez la page.');
+          return;
+        }
+
+        console.log('Initiating Pi payment for:', nft.title, nft.price);
+        
+        // Ensure Pi is initialized with correct scopes
+        try {
+          await pi.init({ version: '2.0', sandbox: false });
+          console.log('Pi initialized');
+        } catch (initErr) {
+          console.warn('Pi init warning (may be already initialized):', initErr);
+        }
+
+        // Authenticate with payments scope
+        try {
+          console.log('Authenticating with payments scope...');
+          const auth = await pi.authenticate(['payments']);
+          console.log('Authentication successful:', auth);
+        } catch (authErr) {
+          console.error('Pi authentication error:', authErr);
+          alert('Erreur d\'authentification Pi. Assurez-vous d\'être dans le Pi Browser.');
+          return;
+        }
+
+        // Alert for debugging
+        alert('Tentative de paiement Pi lancée !');
+
+        // Create payment
+        const payment = await pi.createPayment(
+          {
+            amount: nft.price,
+            memo: `Achat de ${nft.title}`,
+            metadata: { nftId: nft.id, title: nft.title },
+          },
+          {
+            onReadyForServerApproval: async (paymentId: string) => {
+              console.log('Payment ready for approval:', paymentId);
+              try {
+                const res = await fetch('/api/pi/payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'approve',
+                    paymentId,
+                    amount: nft.price,
+                    memo: `Achat de ${nft.title}`,
+                  })
+                });
+                if (!res.ok) {
+                  throw new Error(`Erreur serveur: ${res.status}`);
+                }
+                console.log('Server approval confirmed');
+              } catch (err) {
+                console.error('Error sending approval:', err);
+              }
+            },
+            onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+              console.log('Payment ready for completion:', paymentId, txid);
+              try {
+                const res = await fetch('/api/pi/payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'complete',
+                    paymentId,
+                    txid,
+                    amount: nft.price,
+                    memo: `Achat de ${nft.title}`,
+                  })
+                });
+                if (!res.ok) {
+                  const err = await res.json();
+                  throw new Error(err.error || `Erreur serveur: ${res.status}`);
+                }
+                alert(`Paiement complété! ID: ${paymentId}`);
+              } catch (err) {
+                console.error('Error completing payment:', err);
+                alert(`Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+              }
+            },
+            onCancel: (paymentId: string) => {
+              console.log('Payment cancelled:', paymentId);
+              alert('Achat annulé.');
+            },
+            onError: (error: any) => {
+              console.error('Payment error:', error);
+              alert(`Erreur de paiement: ${error?.message || 'Erreur inconnue'}`);
+            },
+          }
+        );
+        
+        console.log('Payment created:', payment);
+      } else if (paymentMethod === 'ARTC') {
+        // TODO: Implement ARTC transfer logic
+        alert(`Achat de ${nft.title} via ARTC. Prix: ${nft.price} ARTC. (À implémenter)`);
+      }
+    } catch (error) {
+      console.error('handleBuy error:', error);
+      alert(`Erreur lors de l'achat: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
   };
 
   const toggleDropdown = (e: React.MouseEvent) => {
@@ -38,13 +144,14 @@ export default function NFTCard({ nft }: NFTCardProps) {
   };
 
   return (
-    <Link href={`/explorer/${nft.id}`}>
-      <motion.div
-        whileHover={{ scale: 1.05, translateY: -8 }}
-        whileTap={{ scale: 0.98 }}
-        className="group cursor-pointer h-full"
-      >
-        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 backdrop-blur-xl transition-all duration-300 hover:border-blue-500/50 h-full flex flex-col">
+    <div className="relative h-full group">
+      <Link href={`/explorer/${nft.id}`}>
+        <motion.div
+          whileHover={{ scale: 1.05, translateY: -8 }}
+          whileTap={{ scale: 0.98 }}
+          className="group cursor-pointer h-full"
+        >
+          <div className="relative rounded-2xl overflow-visible bg-gradient-to-br from-gray-900 to-black border border-gray-800/50 backdrop-blur-xl transition-all duration-300 hover:border-blue-500/50 h-full flex flex-col">
           {/* Glow effect on hover */}
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-blue-500/0 to-blue-500/5 group-hover:from-blue-500/10 group-hover:to-blue-500/5" />
@@ -132,24 +239,6 @@ export default function NFTCard({ nft }: NFTCardProps) {
                 >
                   Acheter
                 </button>
-
-                {isDropdownOpen && (
-                  <div className="absolute left-0 right-0 mt-2 bg-slate-950 border border-gray-800 rounded-2xl shadow-xl overflow-hidden z-20">
-                    {PAYMENT_OPTIONS.map((option) => (
-                      <button
-                        key={option.method}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleBuy(option.method);
-                        }}
-                        className="w-full text-left px-4 py-3 text-sm text-white hover:bg-slate-900 transition"
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -172,7 +261,28 @@ export default function NFTCard({ nft }: NFTCardProps) {
             </motion.div>
           </div>
         </div>
-      </motion.div>
-    </Link>
+        </motion.div>
+      </Link>
+
+      {/* Dropdown positioned relative to parent wrapper */}
+      {isDropdownOpen && (
+        <div className="absolute left-0 right-0 mt-2 bg-slate-950 border border-gray-800 rounded-2xl shadow-xl overflow-hidden z-50" style={{ top: '100%' }}>
+          {PAYMENT_OPTIONS.map((option) => (
+            <button
+              key={option.method}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.nativeEvent.stopImmediatePropagation();
+                handleBuy(option.method);
+              }}
+              className="w-full text-left px-4 py-3 text-sm text-white hover:bg-slate-900 transition"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

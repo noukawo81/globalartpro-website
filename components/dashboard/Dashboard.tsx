@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { WandSparkles } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { usePi } from '@/context/PiContext';
 import ReferralCard from '@/components/referral/ReferralCard';
@@ -233,35 +232,6 @@ export default function Dashboard() {
           </motion.div>
         </div>
       </section>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.85 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="fixed bottom-24 right-6 z-50"
-      >
-        <motion.button
-          type="button"
-          aria-label="Assistant GlobalArtpro"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.98 }}
-          className="relative inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-sky-500 shadow-[0_18px_50px_-25px_rgba(99,102,241,0.75)] hover:shadow-[0_0_0_20px_rgba(56,189,248,0.24)] text-white ring-1 ring-white/20 transition-all hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-sky-300"
-          style={{ animation: 'fabPulse 2.8s ease-in-out infinite' }}
-        >
-          <WandSparkles className="w-7 h-7" />
-          <span className="absolute top-2 right-2 h-3.5 w-3.5 rounded-full bg-emerald-400 border border-white/90 ring-1 ring-white/80" />
-        </motion.button>
-      </motion.div>
-
-      <style jsx>{`
-        @keyframes fabPulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.04); }
-        }
-      `}</style>
     </div>
   );
 }

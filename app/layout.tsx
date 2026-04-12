@@ -7,6 +7,7 @@ import MobileHeader from "@/components/layout/MobileHeader";
 import BottomNav from "@/components/layout/BottomNav";
 import { PiProvider } from "@/context/PiContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { PiMockProvider } from "@/components/PiMockProvider";
 import "./globals.css";
 import AIAssistant from '@/components/ui/AIAssistant';
 
@@ -42,8 +43,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-black">
-        <AuthProvider>
-          <PiProvider>
+        <PiMockProvider>
+          <AuthProvider>
+            <PiProvider>
             {/* Desktop Navbar */}
             <div className="hidden md:block">
               <Suspense fallback={<div className="h-20 bg-gray-900" />}>
@@ -66,6 +68,7 @@ export default function RootLayout({
             </Suspense>
           </PiProvider>
         </AuthProvider>
+        </PiMockProvider>
       </body>
     </html>
   );

@@ -82,10 +82,12 @@ const GlobalArtProLanding = () => {
             <div className="aspect-video w-full bg-black">
               <iframe
                 className="w-full h-full"
-                src="https://www.youtube.com/embed/AtZYiasRfrQ"
+                src="https://www.youtube.com/embed/AtZYiasRfrQ?rel=0"
                 title="GlobalArtPro Demo"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
+                frameBorder="0"
+                referrerPolicy="strict-origin-when-cross-origin"
               ></iframe>
             </div>
           </div>
