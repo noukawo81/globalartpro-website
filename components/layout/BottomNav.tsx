@@ -27,8 +27,8 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-sm border-t border-slate-800/50 h-16">
-      <div className="flex items-center justify-around h-full px-2">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-sm border-t border-slate-800/50">
+      <div className="flex items-center justify-around px-2 py-2">
         {bottomNavItems.map((item) => {
           const active = isActive(item.href);
           return (
@@ -54,6 +54,15 @@ export default function BottomNav() {
             </Link>
           );
         })}
+      </div>
+      <div className="flex items-center justify-center gap-4 py-2 border-t border-slate-800/50 px-4">
+        <Link href="/privacy" className="text-[11px] text-slate-400 hover:text-white transition">
+          Confidentialité
+        </Link>
+        <span className="h-3 w-px bg-slate-700" />
+        <Link href="/terms" className="text-[11px] text-slate-400 hover:text-white transition">
+          Conditions
+        </Link>
       </div>
     </nav>
   );

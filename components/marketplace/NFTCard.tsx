@@ -4,14 +4,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { NFTItem } from '@/lib/mockNFTs';
 
-const USD_RATES = {
-  ARTC: 150, // 1 ARTC = 150 USD
-  Pi: 10,   // 1 Pi = 10 USD
-};
-
-const OFFERED_PAYMENT_OPTIONS = ['USDT', 'PI', 'ARTC'] as const;
+const PAYMENT_OPTIONS = [
+  { label: 'Payer en Pi', method: 'Pi' },
+  { label: 'Offrir en ARTC', method: 'ARTC' },
+] as const;
 
 interface NFTCardProps {
   nft: NFTItem;
@@ -19,6 +18,7 @@ interface NFTCardProps {
 
 export default function NFTCard({ nft }: NFTCardProps) {
   const router = useRouter();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleArtistClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -26,10 +26,15 @@ export default function NFTCard({ nft }: NFTCardProps) {
     router.push(`/artists`);
   };
 
-  const priceInUSD = nft.priceType === 'ARTC' ? nft.price * USD_RATES.ARTC : nft.price * USD_RATES.Pi;
+  const handleBuy = (paymentMethod: typeof PAYMENT_OPTIONS[number]['method']) => {
+    setIsDropdownOpen(false);
+    alert(`Achat de ${nft.title} via ${paymentMethod}. Prix affiché : ${nft.price} ${nft.priceType}.`);
+  };
 
-  const handleBuy = (currency: typeof OFFERED_PAYMENT_OPTIONS[number]) => {
-    alert(`Achat de ${nft.title} pour ${nft.price} ${currency} (équivalent USD ≈ ${priceInUSD.toFixed(2)}).`);
+  const toggleDropdown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDropdownOpen((prev) => !prev);
   };
 
   return (
@@ -118,23 +123,33 @@ export default function NFTCard({ nft }: NFTCardProps) {
                     {nft.priceType}
                   </span>
                 </p>
-                <p className="text-xs text-gray-400">≈ {priceInUSD.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} USD</p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                {OFFERED_PAYMENT_OPTIONS.map((currency) => (
-                  <button
-                    key={currency}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleBuy(currency);
-                    }}
-                    className="px-2 py-1 rounded-md bg-blue-700 text-xs text-white hover:bg-blue-600 transition"
-                  >
-                    Acheter en {currency}
-                  </button>
-                ))}
+              <div className="relative">
+                <button
+                  onClick={toggleDropdown}
+                  className="w-full px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold text-sm hover:from-blue-500 hover:to-blue-400 transition"
+                >
+                  Acheter
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute left-0 right-0 mt-2 bg-slate-950 border border-gray-800 rounded-2xl shadow-xl overflow-hidden z-20">
+                    {PAYMENT_OPTIONS.map((option) => (
+                      <button
+                        key={option.method}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleBuy(option.method);
+                        }}
+                        className="w-full text-left px-4 py-3 text-sm text-white hover:bg-slate-900 transition"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

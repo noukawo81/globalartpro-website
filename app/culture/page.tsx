@@ -477,10 +477,39 @@ const VipSalon = () => {
   const piCost = paymentRates.PI;
   const convertedAmount = piCost * conversionRates[selectedCurrency];
 
+  const getCurrentOrigin = () => {
+    if (typeof window === 'undefined') return '';
+    return window.location.origin;
+  };
+
+  const isPiBrowserAvailable = () => {
+    if (typeof window === 'undefined') return false;
+    return Boolean((window as any).Pi) && /PiBrowser/i.test(navigator.userAgent);
+  };
+
+  const authenticateWithPi = async () => {
+    const pi = (window as any).Pi;
+    if (!pi) {
+      throw new Error('Pi SDK non chargé.');
+    }
+
+    try {
+      await pi.init({ version: '2.0', sandbox: false });
+    } catch (initError) {
+      console.warn('Pi init failed:', initError);
+    }
+
+    const authResult = await pi.authenticate(['username', 'payments']);
+    if (!authResult || !authResult.user) {
+      throw new Error('Authentification Pi non validée.');
+    }
+
+    return authResult;
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const userAgent = navigator.userAgent || '';
-      setIsPiBrowser(/PiBrowser/i.test(userAgent));
+      setIsPiBrowser(isPiBrowserAvailable());
     }
   }, []);
 
@@ -488,8 +517,25 @@ const VipSalon = () => {
     setPaymentError('');
     setIsAccessing(true);
 
-    if (typeof window === 'undefined' || !(window as any).Pi || !isPiBrowser) {
+    if (typeof window === 'undefined' || !isPiBrowserAvailable()) {
       setPaymentError('Le paiement Pi nécessite le Pi Browser.');
+      setIsAccessing(false);
+      return;
+    }
+
+    const currentOrigin = getCurrentOrigin();
+    const expectedOrigin = process.env.NEXT_PUBLIC_PI_APP_URL;
+    if (expectedOrigin && expectedOrigin !== currentOrigin) {
+      setPaymentError(`URL de l'application Pi incorrecte. Vérifiez que ${currentOrigin} correspond à l'URL enregistrée dans le Pi Developer Portal.`);
+      setIsAccessing(false);
+      return;
+    }
+
+    try {
+      await authenticateWithPi();
+    } catch (authError: any) {
+      console.error('Pi authentication failed:', authError);
+      setPaymentError('Connexion Pi nécessaire avant de lancer le paiement.');
       setIsAccessing(false);
       return;
     }
