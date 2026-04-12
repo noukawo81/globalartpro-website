@@ -127,12 +127,12 @@ export default function AIAssistant() {
         transition={{ duration: 0.5, ease: 'easeOut' }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.96 }}
-        className="relative w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-sky-500 shadow-[0_20px_60px_-30px_rgba(99,102,241,0.9)] text-white ring-1 ring-white/20 transition-all hover:shadow-[0_0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-300"
+        className="relative w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-sky-500 shadow-[0_20px_60px_-30px_rgba(99,102,241,0.9)] text-white ring-1 ring-white/20 transition-all hover:shadow-[0_0_0_20px_rgba(56,189,248,0.18)] focus:outline-none focus:ring-2 focus:ring-sky-300"
         style={{ animation: 'fabPulse 2.8s ease-in-out infinite' }}
         aria-label={isOpen ? 'Fermer l’assistante IA' : 'Ouvrir l’assistante IA'}
       >
-        <WandSparkles className="w-7 h-7" />
-        <span className="absolute top-2 right-2 h-3.5 w-3.5 rounded-full bg-emerald-400 border border-white/90 ring-1 ring-white/80" />
+        <WandSparkles className="w-5 h-5" />
+        <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 border border-white/90 ring-1 ring-white/80" />
         {isOpen && (
           <span className="absolute inset-0 rounded-full bg-white/10" />
         )}
