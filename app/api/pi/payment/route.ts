@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
+import { getClientPromise } from '@/lib/mongodb';
 
 interface PiPaymentData {
   paymentId: string;
@@ -15,15 +15,6 @@ interface PiPaymentData {
 }
 
 const pendingPayments = new Map<string, PiPaymentData>();
-
-async function getMongoClient() {
-  try {
-    return await clientPromise;
-  } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
-    throw new Error('Database connection failed');
-  }
-}
 
 async function verifyPiPayment(paymentId: string) {
   // TODO: Remplacer par la vérification réelle du SDK serveur Pi.
@@ -111,7 +102,7 @@ export async function POST(request: NextRequest) {
         paymentData.txid = txid;
         pendingPayments.set(paymentId, paymentData);
 
-        const client = await getMongoClient();
+        const client = await getClientPromise();
 
         try {
           await updateUserToVip(client, paymentData);
