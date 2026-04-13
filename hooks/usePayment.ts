@@ -5,8 +5,8 @@ import { useState, useCallback } from 'react';
 // Types pour le système de paiement
 export interface PaymentData {
   amount: number;
-  currency: 'ARTC' | 'Pi' | 'USD' | 'USDT';
-  method: 'card' | 'mobile' | 'artc' | 'pi';
+  currency: 'ARTC' | 'Pi';
+  method: 'artc' | 'pi';
   itemId: string;
   itemTitle: string;
   userId?: string;
@@ -41,12 +41,6 @@ export function usePayment() {
       let result: PaymentResult;
 
       switch (data.method) {
-        case 'card':
-          result = await processCardPayment(data);
-          break;
-        case 'mobile':
-          result = await processMobilePayment(data);
-          break;
         case 'artc':
           result = await processArtcPayment(data);
           break;
@@ -82,43 +76,6 @@ export function usePayment() {
 }
 
 // Fonctions de traitement par méthode
-async function processCardPayment(data: PaymentData): Promise<PaymentResult> {
-  // TODO: intégrer Stripe API
-  // Simulation de paiement Stripe
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
-  // Simulation de succès/échec aléatoire (90% succès)
-  const success = Math.random() > 0.1;
-
-  if (success) {
-    return {
-      success: true,
-      transactionId: `stripe_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      redirectUrl: `/checkout/success?method=card&amount=${data.amount}`,
-    };
-  } else {
-    throw new Error('Paiement refusé par la banque');
-  }
-}
-
-async function processMobilePayment(data: PaymentData): Promise<PaymentResult> {
-  // TODO: intégrer API Mobile Money (Orange, MTN, Wave)
-  // Simulation de paiement mobile
-  await new Promise(resolve => setTimeout(resolve, 3000));
-
-  // Validation basique du numéro (simulation)
-  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-  if (!phoneRegex.test(data.userId || '')) {
-    throw new Error('Numéro de téléphone invalide');
-  }
-
-  return {
-    success: true,
-    transactionId: `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    redirectUrl: `/checkout/success?method=mobile&amount=${data.amount}`,
-  };
-}
-
 async function processArtcPayment(data: PaymentData): Promise<PaymentResult> {
   // Simulation de vérification du solde ARTC
   const artcBalance = 2500; // En production, récupérer du wallet utilisateur

@@ -6,12 +6,10 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { usePi } from '@/context/PiContext';
 import { useAuth } from '@/context/AuthContext';
-import { usePayment, usePaymentValidation } from '@/hooks/usePayment';
+import { usePayment } from '@/hooks/usePayment';
 import { initiatePiPayment, isPiBrowser, PiPayment } from '@/lib/piPayment';
 import OrderSummary, { PurchaseBenefits, DeliveryInfo } from '@/components/checkout/OrderSummary';
 import PaymentMethods, {
-  CardPaymentForm,
-  MobilePaymentForm,
   ArtcPaymentForm,
   PiPaymentForm,
 } from '@/components/checkout/PaymentMethods';
@@ -22,12 +20,12 @@ interface CheckoutItem {
   title: string;
   image: string;
   price: number;
-  currency: 'ARTC' | 'Pi' | 'USD' | 'USDT';
+  currency: 'ARTC' | 'Pi';
   type: 'nft' | 'service';
 }
 
 interface PaymentMethod {
-  id: 'card' | 'mobile' | 'artc' | 'pi';
+  id: 'artc' | 'pi';
   name: string;
   icon: string;
   description: string;
@@ -35,20 +33,6 @@ interface PaymentMethod {
 }
 
 const paymentMethods: PaymentMethod[] = [
-  {
-    id: 'card',
-    name: 'Carte bancaire',
-    icon: '💳',
-    description: 'Visa, Mastercard, American Express',
-    available: true,
-  },
-  {
-    id: 'mobile',
-    name: 'Mobile Money',
-    icon: '📱',
-    description: 'Orange Money, MTN, Wave',
-    available: true,
-  },
   {
     id: 'artc',
     name: 'ARTC Wallet',
@@ -71,7 +55,6 @@ export default function CheckoutPage() {
   const { user: piUser, isAuthenticated: piAuthenticated } = usePi();
   const { user: authUser, setSupporterStatus } = useAuth();
   const { processPayment, isProcessing } = usePayment();
-  const { validateCardDetails, validateMobileNumber } = usePaymentValidation();
 
   // Mock item data (in real app, this would come from cart/context)
   const [item] = useState<CheckoutItem>({
@@ -83,14 +66,7 @@ export default function CheckoutPage() {
     type: 'nft',
   });
 
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod['id']>('card');
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [cardDetails, setCardDetails] = useState({
-    number: '',
-    expiry: '',
-    cvc: '',
-    name: '',
-  });
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod['id']>('artc');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const [donationOption, setDonationOption] = useState<'none' | '1' | '2' | '5' | 'custom'>('none');
@@ -160,16 +136,16 @@ export default function CheckoutPage() {
     setPaymentSuccessMessage('');
 
     // Validation selon la méthode
-    if (selectedMethod === 'card') {
-      const validation = validateCardDetails(cardDetails);
-      if (!validation.isValid) {
-        setValidationErrors(validation.errors);
+    if (selectedMethod === 'artc') {
+      // Validation ARTC - vérifier le solde utilisateur
+      if (!authUser?.artcBalance || authUser.artcBalance < totalFinal) {
+        setValidationErrors(['Solde ARTC insuffisant']);
         return;
       }
-    } else if (selectedMethod === 'mobile') {
-      const validation = validateMobileNumber(mobileNumber);
-      if (!validation.isValid) {
-        setValidationErrors([validation.error!]);
+    } else if (selectedMethod === 'pi') {
+      // Validation Pi - vérifier la connexion
+      if (!piAuthenticated) {
+        setValidationErrors(['Connexion Pi Network requise']);
         return;
       }
     }
@@ -260,14 +236,6 @@ export default function CheckoutPage() {
           
           {/* Devises acceptées */}
           <div className="flex justify-center gap-6 items-center flex-wrap">
-            <div className="flex items-center gap-2 bg-gray-900/50 border border-blue-500/20 rounded-full px-4 py-2">
-              <span className="text-lg">💵</span>
-              <span className="text-sm font-medium text-gray-300">USD</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-900/50 border border-blue-500/20 rounded-full px-4 py-2">
-              <span className="text-lg">💳</span>
-              <span className="text-sm font-medium text-gray-300">USDT</span>
-            </div>
             <div className="flex items-center gap-2 bg-gray-900/50 border border-blue-500/20 rounded-full px-4 py-2">
               <span className="text-lg">π</span>
               <span className="text-sm font-medium text-gray-300">Pi Network</span>

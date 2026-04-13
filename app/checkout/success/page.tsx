@@ -15,15 +15,11 @@ export default function CheckoutSuccessPage() {
   const amount = searchParams.get('amount') || '0';
 
   const methodNames = {
-    card: 'Carte bancaire',
-    mobile: 'Mobile Money',
     artc: 'ARTC Wallet',
     pi: 'Pi Network',
   };
 
   const methodIcons = {
-    card: '💳',
-    mobile: '📱',
     artc: '🎨',
     pi: 'π',
   };

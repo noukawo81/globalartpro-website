@@ -8,7 +8,7 @@ interface OrderItem {
   title: string;
   image: string;
   price: number;
-  currency: 'ARTC' | 'Pi' | 'USD' | 'USDT';
+  currency: 'ARTC' | 'Pi';
   type: 'nft' | 'service';
 }
 

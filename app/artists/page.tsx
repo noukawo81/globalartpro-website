@@ -40,7 +40,7 @@ interface Artwork {
   likes: number
   views: number
   price?: number
-  currency?: 'ARTC' | 'USD'
+  currency?: 'ARTC'
   certified: boolean
   createdAt: string
 }
