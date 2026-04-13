@@ -494,7 +494,12 @@ const VipSalon = () => {
     }
 
     try {
-      await pi.init({ version: '2.0', sandbox: false });
+      await pi.init({
+        version: '2.0',
+        sandbox: false,
+        appId: process.env.NEXT_PUBLIC_PI_APP_ID || 'globalartproadac3428',
+        appOrigins: ['https://www.globalartpro.com', 'https://globalartproadac3428.pinet.com']
+      });
     } catch (initError) {
       console.warn('Pi init failed:', initError);
     }
@@ -514,6 +519,7 @@ const VipSalon = () => {
   }, []);
 
   const handleVipAccess = async () => {
+    console.log('Clic Sanctuaire détecté');
     setPaymentError('');
     setIsAccessing(true);
 
