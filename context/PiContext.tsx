@@ -146,6 +146,7 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
     const callbacks = {
       onReadyForServerApproval: async (paymentId: string) => {
         console.log('Payment ready for server approval:', paymentId);
+        console.log('Approbation envoyée au serveur Pi');
 
         // Envoyer au serveur pour validation
         try {

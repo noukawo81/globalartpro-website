@@ -49,15 +49,33 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, paymentId, txid, amount, memo, userEmail, userId, user_uid } = body;
 
+    console.log("Paiement reçu sur le serveur :", paymentId);
+
     if (!paymentId) {
-      return NextResponse.json({ error: 'paymentId manquant' }, { status: 400 });
+      return NextResponse.json({ error: 'paymentId manquant' }, {
+        status: 400,
+        headers: {
+          'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }
+      });
     }
 
     switch (action) {
       case 'approve': {
         if (typeof amount !== 'number' || !memo) {
-          return NextResponse.json({ error: 'Montant et mémo requis pour l’approbation' }, { status: 400 });
+          return NextResponse.json({ error: 'Montant et memo requis pour l\'approbation' }, {
+            status: 400,
+            headers: {
+              'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+              'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type',
+            }
+          });
         }
+
+        console.log('[PI PAYMENT] Approbation reçue du client pour paymentId:', paymentId);
 
         const paymentData: PiPaymentData = {
           paymentId,
@@ -72,7 +90,18 @@ export async function POST(request: NextRequest) {
         pendingPayments.set(paymentId, paymentData);
         console.log('[PI PAYMENT] Server approval stored for payment:', paymentData);
 
-        return NextResponse.json({ success: true, message: 'Server approval enregistré.' });
+        // Réponse compatible Pi Network avec paymentId inclus
+        return NextResponse.json({
+          success: true,
+          paymentId: paymentId,
+          message: 'Server approval enregistré.'
+        }, {
+          headers: {
+            'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          }
+        });
       }
 
       case 'complete': {
@@ -80,7 +109,14 @@ export async function POST(request: NextRequest) {
 
         if (!paymentData) {
           if (!amount || !memo || (!userEmail && !userId && !user_uid)) {
-            return NextResponse.json({ error: 'Données de paiement manquantes pour compléter le paiement' }, { status: 400 });
+            return NextResponse.json({ error: 'Données de paiement manquantes pour compléter le paiement' }, {
+              status: 400,
+              headers: {
+                'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+                'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+              }
+            });
           }
 
           paymentData = {
@@ -96,7 +132,14 @@ export async function POST(request: NextRequest) {
 
         const paymentValid = await verifyPiPayment(paymentId);
         if (!paymentValid) {
-          return NextResponse.json({ error: 'Paiement Pi invalide ou non vérifié' }, { status: 400 });
+          return NextResponse.json({ error: 'Paiement Pi invalide ou non vérifié' }, {
+            status: 400,
+            headers: {
+              'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+              'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type',
+            }
+          });
         }
 
         paymentData.txid = txid;
@@ -108,7 +151,14 @@ export async function POST(request: NextRequest) {
           await updateUserToVip(client, paymentData);
         } catch (error) {
           console.error('[PI PAYMENT] Erreur mise à jour VIP :', error);
-          return NextResponse.json({ error: 'Impossible d’activer le statut VIP' }, { status: 500 });
+          return NextResponse.json({ error: 'Impossible d\'activer le statut VIP' }, {
+            status: 500,
+            headers: {
+              'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+              'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type',
+            }
+          });
         }
 
         console.log(`[PI PAYMENT] Payment ${paymentId} completed, VIP activated.`);
@@ -121,16 +171,47 @@ export async function POST(request: NextRequest) {
             memo: paymentData.memo,
             timestamp: paymentData.timestamp,
           },
+        }, {
+          headers: {
+            'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          }
         });
       }
 
       default:
-        return NextResponse.json({ error: 'Action non reconnue' }, { status: 400 });
+        return NextResponse.json({ error: 'Action non reconnue' }, {
+          status: 400,
+          headers: {
+            'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          }
+        });
     }
   } catch (error) {
     console.error('[PI PAYMENT] Error:', error);
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, {
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
+    });
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -138,12 +219,26 @@ export async function GET(request: NextRequest) {
   const paymentId = searchParams.get('paymentId');
 
   if (!paymentId) {
-    return NextResponse.json({ error: 'Payment ID required' }, { status: 400 });
+    return NextResponse.json({ error: 'Payment ID required' }, {
+      status: 400,
+      headers: {
+        'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
+    });
   }
 
   const payment = pendingPayments.get(paymentId);
   if (!payment) {
-    return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Payment not found' }, {
+      status: 404,
+      headers: {
+        'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
+    });
   }
 
   return NextResponse.json({
@@ -153,5 +248,11 @@ export async function GET(request: NextRequest) {
     memo: payment.memo,
     txid: payment.txid,
     timestamp: payment.timestamp,
+  }, {
+    headers: {
+      'Access-Control-Allow-Origin': 'https://www.globalartpro.com',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    }
   });
 }
