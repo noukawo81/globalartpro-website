@@ -159,7 +159,7 @@ export default function CheckoutPage() {
       method: selectedMethod,
       itemId: item.id,
       itemTitle: item.title,
-      userId: selectedMethod === 'mobile' ? mobileNumber : authUser?.email || piUser?.uid || 'anonymous',
+      userId: authUser?.email || piUser?.uid || 'anonymous',
       authUsername: authUser?.username || piUser?.username || null,
       donationOption,
       roundUp,
@@ -207,10 +207,6 @@ export default function CheckoutPage() {
 
   const canProceed = () => {
     switch (selectedMethod) {
-      case 'card':
-        return cardDetails.number && cardDetails.expiry && cardDetails.cvc && cardDetails.name;
-      case 'mobile':
-        return mobileNumber.length >= 8;
       case 'artc':
         return artcBalance >= item.price;
       case 'pi':
@@ -361,22 +357,6 @@ export default function CheckoutPage() {
             </h2>
 
             {/* Payment Forms */}
-            {selectedMethod === 'card' && (
-              <CardPaymentForm
-                cardDetails={cardDetails}
-                onCardDetailsChange={setCardDetails}
-                errors={validationErrors}
-              />
-            )}
-
-            {selectedMethod === 'mobile' && (
-              <MobilePaymentForm
-                mobileNumber={mobileNumber}
-                onMobileNumberChange={setMobileNumber}
-                error={validationErrors.length > 0 ? validationErrors[0] : undefined}
-              />
-            )}
-
             {selectedMethod === 'artc' && (
               <ArtcPaymentForm
                 artcBalance={artcBalance}
