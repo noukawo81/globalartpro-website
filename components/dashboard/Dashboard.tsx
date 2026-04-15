@@ -117,7 +117,7 @@ export default function Dashboard() {
             Actions Principales
           </motion.h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 title: 'Créer une Œuvre',
@@ -179,7 +179,11 @@ export default function Dashboard() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full p-6 rounded-lg border border-blue-500/20 bg-gradient-to-br from-blue-600/15 to-blue-600/5 text-left hover:border-blue-500/50 hover:bg-blue-600/20 transition-all group"
+                    className={`w-full p-6 rounded-lg text-left transition-all group ${
+                      index === 6
+                        ? 'border border-blue-900/40 bg-gradient-to-br from-blue-900/20 to-blue-900/5 hover:border-blue-800/60 hover:bg-blue-900/30'
+                        : 'border border-blue-500/20 bg-gradient-to-br from-blue-600/15 to-blue-600/5 hover:border-blue-500/50 hover:bg-blue-600/20'
+                    }`}
                   >
                     <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{action.icon}</div>
                     <h3 className="font-bold mb-2 text-lg">{action.title}</h3>

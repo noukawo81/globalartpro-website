@@ -210,7 +210,6 @@ export default function CheckoutPage() {
         return;
       }
     }
-    }
 
     // Préparer les données de paiement
     const paymentData = {
