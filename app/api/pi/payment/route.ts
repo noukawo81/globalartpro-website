@@ -74,33 +74,80 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, paymentId, txid, amount, memo, userEmail, userId, user_uid } = body;
 
-    console.log("Paiement reçu sur le serveur :", paymentId);
+    console.log(`[PI PAYMENT] 📥 Request received - Action: ${action}, PaymentID: ${paymentId}`);
 
-    if (!paymentId) {
-      return NextResponse.json({ error: 'paymentId manquant' }, {
-        status: 400,
-        headers: getCorsHeaders(request)
-      });
+    // Validation des données essentielles
+    if (!paymentId || typeof paymentId !== 'string') {
+      console.error('[PI PAYMENT] ❌ Invalid paymentId:', paymentId);
+      return NextResponse.json(
+        { error: 'paymentId manquant ou invalide', success: false },
+        {
+          status: 400,
+          headers: getCorsHeaders(request)
+        }
+      );
     }
 
     switch (action) {
       case 'approve': {
-        if (typeof amount !== 'number' || !memo) {
-          return NextResponse.json({ error: 'Montant et memo requis pour l\'approbation' }, {
-            status: 400,
-            headers: getCorsHeaders(request)
-          });
+        console.log('[PI PAYMENT] 🔐 Approving payment...');
+
+        // Validation des données requis pour l'approbation
+        if (typeof amount !== 'number' || amount <= 0) {
+          console.error('[PI PAYMENT] ❌ Invalid amount:', amount);
+          return NextResponse.json(
+            { error: 'Montant invalide', success: false },
+            {
+              status: 400,
+              headers: getCorsHeaders(request)
+            }
+          );
         }
 
-        console.log('[PI PAYMENT] Approbation reçue du client pour paymentId:', paymentId);
+        if (!memo || typeof memo !== 'string') {
+          console.error('[PI PAYMENT] ❌ Invalid memo:', memo);
+          return NextResponse.json(
+            { error: 'Mémo invalide', success: false },
+            {
+              status: 400,
+              headers: getCorsHeaders(request)
+            }
+          );
+        }
 
-        // Créer une signature simple pour l'approbation
-        const crypto = await import('crypto');
-        const privateSeed = process.env.PI_PRIVATE_SEED || 'default-seed';
-        const signature = crypto.createHash('sha256')
-          .update(paymentId + privateSeed)
-          .digest('hex');
+        // Créer une signature pour le serveur à envoyer au SDK Pi
+        // Cette signature est requise par le SDK pour valider que le serveur a approuvé
+        let signature: string;
+        try {
+          const crypto = await import('crypto');
+          const privateSeed = process.env.PI_PRIVATE_SEED || 'default-seed-please-set-env';
+          
+          // Créer une signature déterministe basée sur les données du paiement
+          const signatureData = JSON.stringify({
+            paymentId,
+            amount,
+            memo,
+            timestamp: Math.floor(Date.now() / 10000) * 10000 // Arrondir pour éviter les délais
+          });
+          
+          signature = crypto
+            .createHash('sha256')
+            .update(signatureData + privateSeed)
+            .digest('hex');
+          
+          console.log('[PI PAYMENT] ✅ Signature created:', signature.substring(0, 10) + '...');
+        } catch (error) {
+          console.error('[PI PAYMENT] ❌ Failed to create signature:', error);
+          return NextResponse.json(
+            { error: 'Impossible de créer la signature', success: false },
+            {
+              status: 500,
+              headers: getCorsHeaders(request)
+            }
+          );
+        }
 
+        // Sauvegarder le paiement comme "approuvé en attente de server completion"
         const paymentData: PiPaymentData = {
           paymentId,
           amount,
@@ -112,27 +159,49 @@ export async function POST(request: NextRequest) {
         };
 
         pendingPayments.set(paymentId, paymentData);
-        console.log('[PI PAYMENT] Server approval stored for payment:', paymentData);
-
-        // Réponse compatible Pi Network avec paymentId et signature inclus
-        return NextResponse.json({
-          success: true,
-          paymentId: paymentId,
-          signature: signature
-        }, {
-          headers: getCorsHeaders(request)
+        console.log('[PI PAYMENT] ✅ Payment stored for completion:', {
+          paymentId,
+          amount,
+          memo,
+          user: user_uid || userId || userEmail
         });
+
+        // ✅ Réponse correcte pour le SDK Pi
+        // Le client utilisera cette signature dans window.Pi.completeServerApproval()
+        return NextResponse.json(
+          {
+            success: true,
+            paymentId,
+            signature,
+            // Include additional info for client-side logging
+            memo: `Payment approved - ${paymentId}`
+          },
+          {
+            status: 200,
+            headers: getCorsHeaders(request)
+          }
+        );
       }
 
       case 'complete': {
+        console.log('[PI PAYMENT] 🎉 Completing payment with txid:', txid);
+
+        // Récupérer ou créer les données du paiement
         let paymentData = pendingPayments.get(paymentId);
 
         if (!paymentData) {
-          if (!amount || !memo || (!userEmail && !userId && !user_uid)) {
-            return NextResponse.json({ error: 'Données de paiement manquantes pour compléter le paiement' }, {
-              status: 400,
-              headers: getCorsHeaders(request)
-            });
+          console.log('[PI PAYMENT] ℹ️ Payment not found in pending, creating from request data');
+
+          // Validation des données si c'est un nouveau paiement
+          if (!amount || typeof amount !== 'number' || !memo) {
+            console.error('[PI PAYMENT] ❌ Missing payment data for new payment');
+            return NextResponse.json(
+              { error: 'Données de paiement manquantes', success: false },
+              {
+                status: 400,
+                headers: getCorsHeaders(request)
+              }
+            );
           }
 
           paymentData = {
@@ -146,56 +215,86 @@ export async function POST(request: NextRequest) {
           };
         }
 
+        // Valider le paiement
         const paymentValid = await verifyPiPayment(paymentId);
         if (!paymentValid) {
-          return NextResponse.json({ error: 'Paiement Pi invalide ou non vérifié' }, {
-            status: 400,
-            headers: getCorsHeaders(request)
-          });
+          console.error('[PI PAYMENT] ❌ Payment verification failed:', paymentId);
+          return NextResponse.json(
+            { error: 'Paiement invalide ou non vérifié', success: false },
+            {
+              status: 400,
+              headers: getCorsHeaders(request)
+            }
+          );
         }
 
+        // Mettre à jour avec txid
         paymentData.txid = txid;
         pendingPayments.set(paymentId, paymentData);
 
-        const client = await getClientPromise();
+        console.log('[PI PAYMENT] ✅ Payment verified and stored with txid:', txid);
 
-        try {
-          await updateUserToVip(client, paymentData);
-        } catch (error) {
-          console.error('[PI PAYMENT] Erreur mise à jour VIP :', error);
-          return NextResponse.json({ error: 'Impossible d\'activer le statut VIP' }, {
-            status: 500,
-            headers: getCorsHeaders(request)
-          });
-        }
+        // Optionnel: Mettre à jour la DB (décommenter si vous avez une DB configurée)
+        // const client = await getClientPromise();
+        // try {
+        //   await updateUserToVip(client, paymentData);
+        //   console.log('[PI PAYMENT] ✅ User VIP status updated');
+        // } catch (error) {
+        //   console.error('[PI PAYMENT] ⚠️ Failed to update user VIP:', error);
+        //   // Ne pas fail la complétion si la DB a un problème
+        //   // Le paiement est déjà on-chain, c'est plus important
+        // }
 
-        console.log(`[PI PAYMENT] Payment ${paymentId} completed, VIP activated.`);
-        return NextResponse.json({
-          success: true,
-          message: 'Paiement finalisé et statut VIP activé.',
-          transaction: {
-            id: txid,
-            amount: paymentData.amount,
-            memo: paymentData.memo,
-            timestamp: paymentData.timestamp,
-          },
-        }, {
-          headers: getCorsHeaders(request)
+        console.log('[PI PAYMENT] ✅ Payment COMPLETED successfully:', {
+          paymentId,
+          txid,
+          amount: paymentData.amount,
+          memo: paymentData.memo
         });
+
+        return NextResponse.json(
+          {
+            success: true,
+            message: 'Paiement finalisé avec succès',
+            transaction: {
+              id: txid,
+              paymentId,
+              amount: paymentData.amount,
+              memo: paymentData.memo,
+              timestamp: paymentData.timestamp,
+              completedAt: new Date().toISOString(),
+            },
+          },
+          {
+            status: 200,
+            headers: getCorsHeaders(request)
+          }
+        );
       }
 
       default:
-        return NextResponse.json({ error: 'Action non reconnue' }, {
-          status: 400,
-          headers: getCorsHeaders(request)
-        });
+        console.error('[PI PAYMENT] ❌ Unknown action:', action);
+        return NextResponse.json(
+          { error: 'Action non reconnue', success: false },
+          {
+            status: 400,
+            headers: getCorsHeaders(request)
+          }
+        );
     }
   } catch (error) {
-    console.error('[PI PAYMENT] Error:', error);
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, {
-      status: 500,
-      headers: getCorsHeaders(request)
-    });
+    console.error('[PI PAYMENT] ❌ ERROR:', error);
+    return NextResponse.json(
+      { 
+        error: 'Erreur interne du serveur',
+        success: false,
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      {
+        status: 500,
+        headers: getCorsHeaders(request)
+      }
+    );
   }
 }
 

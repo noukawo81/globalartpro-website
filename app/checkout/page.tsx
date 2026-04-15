@@ -75,7 +75,6 @@ export default function CheckoutPage() {
   const [supporterMessage, setSupporterMessage] = useState('');
   const [isSupporter, setIsSupporter] = useState(false);
   const [paymentSuccessMessage, setPaymentSuccessMessage] = useState('');
-  const [showPiModal, setShowPiModal] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -120,34 +119,97 @@ export default function CheckoutPage() {
   const finalDonation = computeDonation();
   const totalFinal = Number((item.price + finalDonation).toFixed(2));
 
-  const handlePiButton = () => {
-    if (isPiBrowser()) {
-      // future: open Pi in-app checkout (App Studio)
-      setShowPiModal(true);
-    } else {
-      // fallback web-friendly UX
-      setShowPiModal(true);
-    }
-    initiatePiPayment();
-  };
+
 
   const handlePayment = async () => {
     setValidationErrors([]);
     setPaymentSuccessMessage('');
 
-    // Validation selon la méthode
+    console.log('[CHECKOUT] 💳 Starting payment process...', { method: selectedMethod, amount: totalFinal });
+
+    // **SPECIAL HANDLING FOR PI PAYMENT**
+    if (selectedMethod === 'pi') {
+      console.log('[CHECKOUT] 🥧 Initiating Pi Network payment...');
+      
+      // Validation Pi - vérifier la connexion
+      if (!piAuthenticated) {
+        console.error('[CHECKOUT] ✋ User not authenticated with Pi');
+        setValidationErrors(['Connexion Pi Network requise']);
+        return;
+      }
+
+      // Vérifier si le SDK Pi est disponible
+      if (typeof window === 'undefined' || !window.Pi) {
+        console.error('[CHECKOUT] ⚠️ Pi SDK not available');
+        setValidationErrors(['SDK Pi non disponible']);
+        return;
+      }
+
+      try {
+        console.log('[CHECKOUT] 🚀 Calling Pi SDK createPayment...');
+        
+        // Préparer les metadata du paiement
+        const metadata = {
+          itemId: item.id,
+          itemTitle: item.title,
+          itemPrice: item.price,
+          donation: finalDonation,
+          totalAmount: totalFinal,
+          donationOption,
+          roundUp,
+          timestamp: new Date().toISOString(),
+        };
+
+        // **APPEL DIRECT AU CONTEXTE PI POUR CRÉER LE PAIEMENT**
+        // C'est le cœur du flux - cela déclenche le SDK Pi
+        const paymentResult = await window.Pi.createPayment(
+          {
+            amount: totalFinal / 1000, // Convertir ARTC à Pi (approximation)
+            memo: `Purchase: ${item.title}`,
+            metadata,
+          },
+          {
+            // Ces callbacks sont gérés par PiContext aussi, mais avoir la boucle ici aide
+            onReadyForServerApproval: (paymentId: string) => {
+              console.log('[CHECKOUT] 📲 Payment ready for approval:', paymentId);
+            },
+            onReadyForServerCompletion: (paymentId: string, txid: string) => {
+              console.log('[CHECKOUT] ✅ Payment completed:', { paymentId, txid });
+              setPaymentSuccessMessage('Paiement réussi! Redirection en cours...');
+              setTimeout(() => {
+                router.push(`/checkout/success?method=pi&amount=${totalFinal}&txid=${txid}`);
+              }, 1500);
+            },
+            onCancel: (paymentId: string) => {
+              console.log('[CHECKOUT] ⚠️ Payment cancelled:', paymentId);
+              setValidationErrors(['Paiement annulé par l\'utilisateur']);
+            },
+            onError: (error: any) => {
+              console.error('[CHECKOUT] ❌ Payment error:', error);
+              setValidationErrors([`Erreur: ${error?.message || 'Erreur de paiement'}`]);
+            },
+          }
+        );
+
+        console.log('[CHECKOUT] 🎯 Payment created:', paymentResult);
+        return;
+      } catch (error) {
+        console.error('[CHECKOUT] ❌ Error initiating Pi payment:', error);
+        setValidationErrors([
+          error instanceof Error ? error.message : 'Erreur lors de l\'initiation du paiement Pi'
+        ]);
+        return;
+      }
+    }
+
+    // **VALIDATION POUR ARTC**
     if (selectedMethod === 'artc') {
       // Validation ARTC - vérifier le solde utilisateur
       if (!authUser?.artcBalance || authUser.artcBalance < totalFinal) {
         setValidationErrors(['Solde ARTC insuffisant']);
         return;
       }
-    } else if (selectedMethod === 'pi') {
-      // Validation Pi - vérifier la connexion
-      if (!piAuthenticated) {
-        setValidationErrors(['Connexion Pi Network requise']);
-        return;
-      }
+    }
     }
 
     // Préparer les données de paiement
@@ -404,27 +466,17 @@ export default function CheckoutPage() {
             )}
 
             <div className="mt-4 text-center">
-              <p className="text-sm text-gray-300 mb-2">Paiement sécurisé via Pi Network disponible dans l’application officielle</p>
-              <button
-                onClick={handlePiButton}
-                className="inline-flex items-center gap-2 rounded-lg border border-blue-500/40 bg-blue-600/60 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500/70 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-              >
-                π Payer avec Pi
-              </button>
+              <p className="text-sm text-gray-300 px-2 py-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                💡 <span className="font-semibold text-blue-400">Astuce:</span> Sélectionnez "Pi Network" ci-dessus et cliquez sur "Payer" pour initier le paiement.
+              </p>
             </div>
 
-            {showPiModal && (
+            {false && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
                 <div className="w-full max-w-md rounded-xl border border-blue-500/30 bg-gray-900 p-6 text-left">
                   <h3 className="text-lg font-bold text-blue-300 mb-2">Paiement Pi Network</h3>
-                  <p className="text-sm text-gray-300 mb-4">Ce mode est préparatoire. Les paiements réels Pi seront gérés dans l’application App Studio, pas sur le web.</p>
-                  <p className="text-xs text-gray-400 mb-6">SDK Pi non activé ici, rien n’est envoyé.</p>
-                  <button
-                    onClick={() => setShowPiModal(false)}
-                    className="rounded-lg bg-blue-600/20 px-4 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-600/30"
-                  >
-                    Fermer
-                  </button>
+                  <p className="text-sm text-gray-300 mb-4">Ce mode est préparatoire. Les paiements réels Pi seront gérés dans l'application App Studio, pas sur le web.</p>
+                  <p className="text-xs text-gray-400 mb-6">SDK Pi non activé ici, rien n'est envoyé.</p>
                 </div>
               </div>
             )}

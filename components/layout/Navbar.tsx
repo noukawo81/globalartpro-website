@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Globe } from 'lucide-react';
 import { usePi } from '@/context/PiContext';
 import { useAuth } from '@/context/AuthContext';
 
@@ -15,6 +16,7 @@ const publicNavLinks = [
   { name: 'GAP Studio IA', href: '/create' },
   { name: 'Musée 3D', href: '/museum' },
   { name: 'Marketplace', href: '/explorer' },
+  { name: 'Communauté', href: '/community' },
   { name: '⛏️ Minage ARTC', href: '/rewards' },
   { name: 'Fondation', href: '/foundation' },
 ];
@@ -26,6 +28,7 @@ const authenticatedNavLinks = [
   { name: 'GAP Studio IA', href: '/create' },
   { name: 'Musée 3D', href: '/museum' },
   { name: 'Marketplace', href: '/explorer' },
+  { name: 'Communauté', href: '/community' },
   { name: '⛏️ Minage ARTC', href: '/rewards' },
   { name: 'Fondation', href: '/foundation' },
 ];
@@ -102,14 +105,12 @@ export default function Navbar() {
                 href="/"
                 className="flex items-center gap-2 whitespace-nowrap"
               >
-                <Image
-                  src="/logos/globalartpro.jpg"
-                  alt="GlobalArtpro"
-                  width={40}
-                  height={40}
-                  className="object-contain w-8 h-8 md:w-10 md:h-10"
-                  priority
-                />
+                <div className="animate-spin-slow">
+                  <Globe 
+                    className="w-8 h-8 md:w-10 md:h-10 text-blue-400 drop-shadow-lg"
+                    strokeWidth={1.5}
+                  />
+                </div>
                 <span className="text-sm md:text-base lg:text-lg font-bold text-white hidden sm:inline">
                   GlobalArtpro
                 </span>

@@ -95,21 +95,36 @@ async function processArtcPayment(data: PaymentData): Promise<PaymentResult> {
 }
 
 async function processPiPayment(data: PaymentData): Promise<PaymentResult> {
-  // TODO: connecter Pi SDK version App Studio
-  // Simulation de paiement Pi
-  const piBalance = 2.5; // En production, récupérer du contexte Pi
+  console.log('[PAYMENT] 🥧 Processing Pi payment...', { amount: data.amount, method: data.method });
+
+  // TODO: connecter Pi SDK version App Studio (App Studio recommandé)
+  // NOTE: La vrai implémentation doit utiliser window.Pi du contexte PiContext
+  // Ce hook simule seulement pour démonstration
+  
+  // En production, il faudrait:
+  // 1. Accéder au contexte PiContext via useContext()
+  // 2. Appeler piContext.createPayment(amount, memo, metadata)
+  // 3. Attendre les callbacks de complétion
+  
+  // Simulation pour maintenant
+  const piBalance = 2.5; // Mock balance
   const requiredPi = data.amount / 1000; // Conversion ARTC -> Pi
 
   if (piBalance < requiredPi) {
     throw new Error('Solde Pi insuffisant');
   }
 
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  console.log('[PAYMENT] 🥧 Simulating Pi payment completion in 3 seconds...');
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  const transactionId = `pi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  console.log('[PAYMENT] ✅ Pi payment simulated:', transactionId);
 
   return {
     success: true,
-    transactionId: `pi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    redirectUrl: `/checkout/success?method=pi&amount=${data.amount}`,
+    transactionId,
+    redirectUrl: `/checkout/success?method=pi&amount=${data.amount}&txid=${transactionId}`,
   };
 }
 

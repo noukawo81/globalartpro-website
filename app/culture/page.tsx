@@ -534,47 +534,82 @@ const VipSalon = () => {
         throw new Error(`URL incorrecte. Domaine actuel: ${currentOrigin}, attendu: ${expectedOrigin}`);
       }
 
+      if (selectedCurrency !== 'PI') {
+        throw new Error('Le paiement du sanctuaire VIP est actuellement disponible uniquement en Pi.');
+      }
+
       console.log('[VIP] Authenticating with Pi...');
       await authenticateWithPi();
       console.log('[VIP] Authentication successful, initiating payment...');
 
       const pi = (window as any).Pi;
-      const payment = await pi.createPayment({
+      await pi.createPayment({
         amount: piCost,
         memo: 'Offrande pour le Sanctuaire VIP',
         onReadyForServerApproval: async ({ paymentId }: { paymentId: string }) => {
           console.log('[VIP] Payment approved, sending to server:', paymentId);
-          await fetch('/api/pi/payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'approve',
-              paymentId,
-              amount: piCost,
-              memo: 'Offrande pour le Sanctuaire VIP',
-              userEmail: user?.email
-            })
-          });
+
+          try {
+            const response = await fetch('/api/pi/payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'approve',
+                paymentId,
+                amount: piCost,
+                memo: 'Offrande pour le Sanctuaire VIP',
+                userEmail: user?.email
+              })
+            });
+
+            if (!response.ok) {
+              const errorResult = await response.json();
+              console.error('[VIP] Server approval failed:', errorResult);
+              throw new Error(errorResult.error || 'Server approval failed');
+            }
+
+            const result = await response.json();
+            console.log('[VIP] Server approval response:', result);
+
+            if (result.signature && window.Pi?.completeServerApproval) {
+              console.log('[VIP] Sending completion signature to Pi SDK...');
+              window.Pi.completeServerApproval(paymentId, result.signature);
+              console.log('[VIP] Signature sent to Pi SDK');
+            } else {
+              console.error('[VIP] Missing signature or completeServerApproval unavailable');
+              throw new Error('Signature serveur manquante ou SDK Pi non disponible.');
+            }
+          } catch (serverError) {
+            console.error('[VIP] Server approval error:', serverError);
+            setPaymentError('Erreur durant l’approbation du paiement.');
+            setIsAccessing(false);
+          }
         },
         onReadyForServerCompletion: async ({ paymentId, txid }: { paymentId: string; txid: string }) => {
-          const response = await fetch('/api/pi/payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'complete',
-              paymentId,
-              txid,
-              userEmail: user?.email
-            })
-          });
+          try {
+            const response = await fetch('/api/pi/payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'complete',
+                paymentId,
+                txid,
+                userEmail: user?.email
+              })
+            });
 
-          if (response.ok) {
-            router.push('/sanctuaire-vip');
-          } else {
-            const errorData = await response.json();
-            setPaymentError(errorData.error || 'Erreur lors de la validation du paiement.');
+            if (response.ok) {
+              router.push('/sanctuaire-vip');
+            } else {
+              const errorData = await response.json();
+              setPaymentError(errorData.error || 'Erreur lors de la validation du paiement.');
+            }
+          } catch (completeError) {
+            console.error('[VIP] Server completion error:', completeError);
+            setPaymentError('Impossible de finaliser le paiement Pi.');
+          } finally {
+            setIsAccessing(false);
           }
-          setIsAccessing(false);
         },
         onCancel: () => {
           setPaymentError('Paiement annulé.');
@@ -588,7 +623,11 @@ const VipSalon = () => {
       });
     } catch (error) {
       console.error('Erreur création paiement Pi:', error);
-      setPaymentError('Impossible d’initier le paiement.');
+      setPaymentError(
+        error instanceof Error
+          ? error.message
+          : 'Impossible d’initier le paiement.'
+      );
       setIsAccessing(false);
     }
   };
