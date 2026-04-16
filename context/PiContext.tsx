@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { config } from '@/lib/config';
 
 // Types pour Pi Network
 interface PiUser {
@@ -17,6 +18,8 @@ interface PiContextType {
   user: PiUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isTestnet: boolean;
+  currency: typeof config.currency;
   login: (email?: string) => Promise<void>;
   logout: () => void;
   rewardPiUser: (email: string, piUsername: string) => Promise<void>;
@@ -70,7 +73,11 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
 
         if (window.Pi) {
           console.log('[PI CONTEXT] 🎯 Pi SDK detected, initializing...');
-          const result = await window.Pi.init({ version: '2.0', sandbox: false });
+          const result = await window.Pi.init({
+            version: '2.0',
+            sandbox: config.pi.sandbox,
+            appId: config.pi.appId,
+          });
           console.log('[PI CONTEXT] ✅ Pi SDK initialized successfully:', result);
         } else {
           console.warn('[PI CONTEXT] ⚠️ Pi SDK not available (mock mode or loading error)');
@@ -172,6 +179,8 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
         ...metadata,
         user_uid: user.uid,
         timestamp: Date.now(),
+        testnet: config.pi.sandbox,
+        currency: config.currency.name,
       },
     };
 
@@ -332,6 +341,8 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
     user,
     isAuthenticated: !!user,
     isLoading,
+    isTestnet: config.pi.sandbox,
+    currency: config.currency,
     login,
     logout,
     rewardPiUser,

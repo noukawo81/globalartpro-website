@@ -209,20 +209,24 @@ export default function ArtistsPage() {
               Chaque artiste est un pont entre traditions ancestrales et innovation digitale.
             </p>
             <div className="flex justify-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-8 py-3 bg-purple-600 text-white rounded-full font-semibold hover:bg-purple-700 transition-colors"
-              >
-                Devenir Artiste
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-8 py-3 border border-purple-400 text-purple-400 rounded-full font-semibold hover:bg-purple-400 hover:text-white transition-colors"
-              >
-                Explorer la Galerie
-              </motion.button>
+              <Link href="/create">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-3 bg-purple-600 text-white rounded-full font-semibold hover:bg-purple-700 transition-colors"
+                >
+                  Devenir Artiste
+                </motion.button>
+              </Link>
+              <Link href="/explorer">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-3 border border-purple-400 text-purple-400 rounded-full font-semibold hover:bg-purple-400 hover:text-white transition-colors"
+                >
+                  Explorer la Galerie
+                </motion.button>
+              </Link>
             </div>
           </motion.div>
         </div>

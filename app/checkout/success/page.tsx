@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { config } from '@/lib/config';
 
 export default function CheckoutSuccessPage() {
   const router = useRouter();
@@ -16,12 +17,12 @@ export default function CheckoutSuccessPage() {
 
   const methodNames = {
     artc: 'ARTC Wallet',
-    pi: 'Pi Network',
+    pi: config.currency.name,
   };
 
   const methodIcons = {
     artc: '🎨',
-    pi: 'π',
+    pi: config.currency.symbol,
   };
 
   // Auto redirect countdown

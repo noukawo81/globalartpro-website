@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { AlertCircle, Heart, Lock } from 'lucide-react';
+import { config } from '@/lib/config';
 
 const GlobalArtProLanding = () => {
   const [prompt, setPrompt] = useState("");
@@ -31,7 +32,7 @@ const GlobalArtProLanding = () => {
       return;
     }
     if (piBalance < 1.0) {
-      alert("Solde Pi insuffisant. Vous avez besoin de 1.00 Pi minimum");
+      alert(`Solde ${config.currency.name} insuffisant. Vous avez besoin de 1.00 ${config.currency.name} minimum`);
       return;
     }
     setShowMintModal(true);
@@ -42,7 +43,7 @@ const GlobalArtProLanding = () => {
     
     // Simulation de la transaction de mint (2 secondes)
     setTimeout(() => {
-      // Déduire le frais de mint du solde Pi
+      // Déduire le frais de mint du solde Test Pi
       setPiBalance(prev => Math.round((prev - 1.0) * 10000) / 10000);
       // Augmenter les récompenses ARTC
       setArtcRewards(prev => prev + 12);

@@ -6,9 +6,10 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { NFTItem } from '@/lib/mockNFTs';
+import { config } from '@/lib/config';
 
 const PAYMENT_OPTIONS = [
-  { label: 'Payer en Pi', method: 'Pi' },
+  { label: `Payer en ${config.currency.name}`, method: 'Pi' },
   { label: 'Offrir en ARTC', method: 'ARTC' },
 ] as const;
 
@@ -32,17 +33,82 @@ export default function NFTCard({ nft }: NFTCardProps) {
     try {
       if (paymentMethod === 'Pi') {
         const pi = (window as any).Pi;
-        if (!pi) {
-          console.error('Pi SDK non chargé');
-          alert('Erreur: SDK Pi non disponible. Réactualisez la page.');
-          return;
+        const isPiBrowser = /PiBrowser/i.test(navigator.userAgent);
+        
+        // Check if in Pi Browser
+        if (!isPiBrowser || !pi) {
+          console.warn('Not in Pi Browser, using test mode payment');
+          
+          // Mode test: Simulate payment for development
+          if (config.pi.sandbox) {
+            alert('🧪 Mode Test - Simulation de paiement Pi en cours...');
+            
+            // Generate test payment ID
+            const testPaymentId = `test_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+            const testTxId = `test_tx_${Date.now()}`;
+            
+            try {
+              // Call approval endpoint
+              const approveRes = await fetch('/api/pi/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'approve',
+                  paymentId: testPaymentId,
+                  amount: nft.price,
+                  memo: `Achat de ${nft.title}`,
+                })
+              });
+              
+              if (!approveRes.ok) {
+                throw new Error(`Erreur lors de l'approbation: ${approveRes.status}`);
+              }
+              
+              console.log('✅ Approval accepted in test mode');
+              
+              // Call completion endpoint
+              const completeRes = await fetch('/api/pi/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'complete',
+                  paymentId: testPaymentId,
+                  txid: testTxId,
+                  amount: nft.price,
+                  memo: `Achat de ${nft.title}`,
+                })
+              });
+              
+              if (!completeRes.ok) {
+                const err = await completeRes.json();
+                throw new Error(err.error || `Erreur serveur: ${completeRes.status}`);
+              }
+              
+              const result = await completeRes.json();
+              console.log('✅ Payment completed in test mode:', result);
+              alert(`✅ Paiement test réussi!\n\nID Paiement: ${testPaymentId}\nTx ID: ${testTxId}\n\nMontant: ${nft.price} ${config.currency.symbol}`);
+              router.push('/marketplace');
+              return;
+            } catch (err) {
+              console.error('Test payment error:', err);
+              alert(`❌ Erreur paiement test: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+              return;
+            }
+          } else {
+            alert('⚠️ Paiement Pi requiert le Pi Browser officiel.\n\n1. Téléchargez l\'application Pi Network\n2. Ouvrez cette page dans le Pi Browser intégré\n3. Cliquez de nouveau sur "Payer"');
+            return;
+          }
         }
 
         console.log('Initiating Pi payment for:', nft.title, nft.price);
         
         // Ensure Pi is initialized with correct scopes
         try {
-          await pi.init({ version: '2.0', sandbox: false });
+          await pi.init({
+            version: '2.0',
+            sandbox: config.pi.sandbox,
+            appId: config.pi.appId,
+          });
           console.log('Pi initialized');
         } catch (initErr) {
           console.warn('Pi init warning (may be already initialized):', initErr);
@@ -223,12 +289,7 @@ export default function NFTCard({ nft }: NFTCardProps) {
               <div className="space-y-1">
                 <p className="text-xs text-gray-400">Prix</p>
                 <p className="text-lg font-bold text-blue-300">
-                  {nft.price.toLocaleString('fr-FR', {
-                    maximumFractionDigits: nft.priceType === 'Pi' ? 2 : 0,
-                  })}{' '}
-                  <span className="text-xs text-gray-400">
-                    {nft.priceType}
-                  </span>
+                  {config.formatPrice(nft.price, nft.priceType === 'Pi' ? 'Pi' : 'ARTC')}
                 </p>
               </div>
 
@@ -237,7 +298,7 @@ export default function NFTCard({ nft }: NFTCardProps) {
                   onClick={toggleDropdown}
                   className="w-full px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold text-sm hover:from-blue-500 hover:to-blue-400 transition"
                 >
-                  Acheter
+                  Acheter avec {config.currency.name}
                 </button>
               </div>
             </div>

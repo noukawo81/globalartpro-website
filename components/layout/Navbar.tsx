@@ -19,6 +19,7 @@ const publicNavLinks = [
   { name: 'Communauté', href: '/community' },
   { name: '⛏️ Minage ARTC', href: '/rewards' },
   { name: 'Fondation', href: '/foundation' },
+  { name: 'Devenir Partenaire', href: '/partenariat' },
 ];
 
 // Navigation pour UTILISATEURS CONNECTÉS
@@ -31,6 +32,7 @@ const authenticatedNavLinks = [
   { name: 'Communauté', href: '/community' },
   { name: '⛏️ Minage ARTC', href: '/rewards' },
   { name: 'Fondation', href: '/foundation' },
+  { name: 'Devenir Partenaire', href: '/partenariat' },
 ];
 
 export default function Navbar() {
@@ -118,7 +120,7 @@ export default function Navbar() {
             </motion.div>
 
             {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-0.5 flex-wrap">
               {navLinks.map((link) => {
                 const active = isActive(link.href);
                 return (
@@ -126,7 +128,7 @@ export default function Navbar() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
+                      className={`px-2 py-1 rounded-md transition-all duration-200 text-xs font-medium ${
                         active
                           ? 'text-blue-300 bg-blue-500/10 border border-blue-500/30'
                           : 'text-gray-300 hover:text-white hover:bg-blue-500/5'
@@ -140,61 +142,33 @@ export default function Navbar() {
             </div>
 
             {/* Desktop Right Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
               {!isAuthenticated ? (
-                // VISITEUR: Connexion + Inscription + Pi (si Pi Browser)
-                <>
+                // VISITEUR: Connexion + Don
+                <div className="flex items-center gap-1">
                   <Link
                     href="/auth/login"
-                    aria-current={isActive('/auth/login') ? 'page' : undefined}
-                    className={`hidden md:inline-block text-sm font-semibold px-3 py-2 rounded-md border transition-all ${
-                      isActive('/auth/login')
-                        ? 'text-white bg-blue-600/30 border-blue-500/50'
-                        : 'text-gray-200 hover:text-white border border-blue-500/20 hover:border-blue-500/50 hover:bg-blue-600/10'
-                    }`}
+                    className="text-xs font-semibold px-2 py-1 rounded border border-blue-500/20 bg-blue-600/10 text-white hover:bg-blue-600/25 transition-all"
                   >
                     Connexion
                   </Link>
-                  <Link
-                    href="/auth/register"
-                    aria-current={isActive('/auth/register') ? 'page' : undefined}
-                    className={`hidden md:inline-block text-sm font-semibold px-3 py-2 rounded-md border transition-all ${
-                      isActive('/auth/register')
-                        ? 'text-white bg-blue-600/40 border-blue-500/50'
-                        : 'text-gray-200 hover:text-white border border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-600/15'
-                    }`}
-                  >
-                    Inscription
-                  </Link>
-                  {isPiBrowser && (
+                  <Link href="/foundation/donate">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => login()}
-                      disabled={isLoading}
-                      className="hidden md:flex items-center gap-2 px-4 py-2 text-white font-bold bg-blue-600/60 border border-blue-500/60 rounded-md hover:bg-blue-500/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-2 py-1 text-blue-200 text-xs font-semibold rounded bg-blue-600/30 border border-blue-500/40 hover:bg-blue-600/50 hover:text-white transition-all"
                     >
-                      {isLoading ? (
-                        <>
-                          <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          <span>Connexion Pi...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-lg">π</span>
-                          <span>Login Pi</span>
-                        </>
-                      )}
+                      💙 Don
                     </motion.button>
-                  )}
-                </>
+                  </Link>
+                </div>
               ) : (
                 // CONNECTÉ: Username + Don + Admin (si admin) + Déconnexion
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
                   <Link href="/profile">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-600/15 border border-blue-500/20 rounded-lg cursor-pointer hover:bg-blue-600/25 transition-colors">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                      <span className="text-blue-200 text-sm font-medium">{authUser?.username}</span>
+                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-600/15 border border-blue-500/20 rounded cursor-pointer hover:bg-blue-600/25 transition-colors">
+                      <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
+                      <span className="text-blue-200 text-xs font-medium">{authUser?.username}</span>
                     </div>
                   </Link>
                   {isAdmin && (
@@ -202,7 +176,7 @@ export default function Navbar() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="px-4 py-2 text-red-300 text-sm font-bold rounded-lg bg-red-600/15 border border-red-500/20 hover:bg-red-600/25 transition-all shadow-lg"
+                        className="px-2 py-1 text-red-300 text-xs font-bold rounded bg-red-600/15 border border-red-500/20 hover:bg-red-600/25 transition-all shadow-lg"
                       >
                         🔧 Admin
                       </motion.button>
@@ -212,7 +186,7 @@ export default function Navbar() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="px-4 py-2 text-blue-200 text-sm font-semibold rounded-lg bg-blue-600/30 border border-blue-500/40 hover:bg-blue-600/50 hover:text-white transition-all"
+                      className="px-2 py-1 text-blue-200 text-xs font-semibold rounded bg-blue-600/30 border border-blue-500/40 hover:bg-blue-600/50 hover:text-white transition-all"
                     >
                       💙 Don
                     </motion.button>
@@ -221,7 +195,7 @@ export default function Navbar() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleLogout}
-                    className="px-4 py-2 text-gray-300 text-sm font-medium rounded-lg hover:text-white hover:bg-blue-500/10 transition-colors"
+                    className="px-2 py-1 text-gray-300 text-xs font-medium rounded hover:text-white hover:bg-blue-500/10 transition-colors"
                   >
                     Déconnexion
                   </motion.button>
@@ -232,8 +206,8 @@ export default function Navbar() {
             {/* Mobile Auth Buttons - Always visible */}
             <div className="md:hidden flex items-center gap-2">
               {!isAuthenticated ? (
-                // VISITEUR: Connexion + Inscription seulement
-                <>
+                // VISITEUR: Connexion + Don
+                <div className="flex items-center gap-2">
                   <Link href="/auth/login">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -243,16 +217,16 @@ export default function Navbar() {
                       Connexion
                     </motion.button>
                   </Link>
-                  <Link href="/auth/register">
+                  <Link href="/foundation/donate">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="px-2 py-1 text-xs font-semibold text-gray-200 border border-blue-500/30 rounded bg-blue-600/10 hover:border-blue-500/60 hover:text-white transition-colors"
+                      className="px-2 py-1 text-xs font-semibold text-blue-200 border border-blue-500/30 rounded bg-blue-600/10 hover:border-blue-500/60 hover:text-white hover:bg-blue-600/20 transition-colors"
                     >
-                      Inscription
+                      Don
                     </motion.button>
                   </Link>
-                </>
+                </div>
               ) : (
                 // CONNECTÉ: Username + Déconnexion
                 <div className="flex items-center gap-2">

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { config } from '@/lib/config';
 
 // Types
 interface Publication {
@@ -496,9 +497,9 @@ const VipSalon = () => {
     try {
       await pi.init({
         version: '2.0',
-        sandbox: false,
-        appId: process.env.NEXT_PUBLIC_PI_APP_ID || 'globalartproadac3428',
-        appOrigins: ['https://www.globalartpro.com', 'https://globalartproadac3428.pinet.com']
+        sandbox: config.pi.sandbox,
+        appId: config.pi.appId,
+        appOrigins: [config.urls.website],
       });
     } catch (initError) {
       console.warn('Pi init failed:', initError);
@@ -525,17 +526,20 @@ const VipSalon = () => {
 
     try {
       if (typeof window === 'undefined' || !isPiBrowserAvailable()) {
-        throw new Error('Le paiement Pi nécessite le Pi Browser. Veuillez utiliser le Pi Browser pour accéder au Sanctuaire VIP.');
+        throw new Error(`⚠️ Accès limité: Le paiement en ${config.currency.name} nécessite le Pi Browser. 
+        
+Veuillez:
+1. Installer l'application Pi Network officielle
+2. Ouvrir cette page dans le Pi Browser intégré
+3. Cliquer de nouveau sur "Accéder au Sanctuaire VIP"
+
+Le ${config.currency.name} n'est disponible que dans le Pi Browser.`);
       }
 
       const currentOrigin = getCurrentOrigin();
       const expectedOrigin = process.env.NEXT_PUBLIC_PI_APP_URL;
       if (expectedOrigin && expectedOrigin !== currentOrigin) {
         throw new Error(`URL incorrecte. Domaine actuel: ${currentOrigin}, attendu: ${expectedOrigin}`);
-      }
-
-      if (selectedCurrency !== 'PI') {
-        throw new Error('Le paiement du sanctuaire VIP est actuellement disponible uniquement en Pi.');
       }
 
       console.log('[VIP] Authenticating with Pi...');
@@ -719,29 +723,18 @@ const VipSalon = () => {
               className="text-center"
             >
               <div className="bg-gradient-to-r from-gold-900/50 to-purple-900/50 p-6 rounded-lg border border-gold-500/50 mb-6">
-                <h4 className="text-xl font-semibold text-white mb-2">Accès Spirituel</h4>
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    {(['PI','ARTC'] as const).map(currency => (
-                      <button
-                        key={currency}
-                        onClick={() => handleCurrencyChange(currency)}
-                        className={`py-2 px-3 rounded-lg border ${selectedCurrency===currency ? 'border-gold-400 bg-gold-500/20 text-gold-200' : 'border-gray-600 text-gray-300'} transition`}
-                      >
-                        {currency}
-                      </button>
-                    ))}
-                  </div>
+                <h4 className="text-xl font-semibold text-white mb-2">Accès Spirituel via {config.currency.name} Network</h4>
                   <div className="mt-3">
                     <div className="text-gray-300 text-sm mb-2">Prix d'accès actuel:</div>
                     <div className="flex items-center justify-center space-x-2 mb-2">
-                      <span className="text-3xl font-bold text-gold-400">{costInSelected}</span>
-                      <span className="text-xl text-white">{selectedCurrency}</span>
+                      <span className="text-3xl font-bold text-gold-400">{piCost}</span>
+                      <span className="text-xl text-white">{config.currency.name}</span>
                     </div>
                     <div className="text-gray-300 text-xs mb-2">
-                      Équivalent: {convertedAmount.toFixed(3)} {selectedCurrency}
+                      Équivalent: {(piCost * conversionRates.ARTC).toFixed(0)} ARTC
                     </div>
                     <p className="text-gray-300 text-sm">Offrande pour l'entrée dans le sanctuaire</p>
-                    <p className="mt-4 text-xs text-gray-400">Les transactions en Pi sont définitives sur la blockchain.</p>
+                    <p className="mt-4 text-xs text-gray-400">Les transactions {config.currency.name} sont définitives sur la blockchain.</p>
                   </div>
                 </div>
 

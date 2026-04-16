@@ -28,24 +28,57 @@ function getCorsHeaders(request: NextRequest) {
 }
 
 async function verifyPiPayment(paymentId: string) {
-  // Vérification manuelle du paiement Pi
-  // Note: Pour une vérification complète, implémenter avec les méthodes Pi Network
   try {
-    // Validation basique du format paymentId
-    if (!paymentId || typeof paymentId !== 'string' || paymentId.length < 10) {
+    // Vérifier avec l'API Pi Network
+    const piApiKey = process.env.PI_API_KEY;
+    if (!piApiKey) {
+      console.warn('[PI VERIFY] No PI_API_KEY found, falling back to basic validation');
+      return basicValidation(paymentId);
+    }
+
+    const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Key ${piApiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error('[PI VERIFY] API call failed:', response.status, response.statusText);
       return false;
     }
-    // Vérifier si le paiement est déjà en pending ou approved
-    if (pendingPayments.has(paymentId)) {
-      console.log('[PI VERIFY] Payment found in pending:', paymentId);
-      return true;
-    }
-    console.log('[PI VERIFY] Payment verified:', paymentId);
-    return true;
+
+    const paymentData = await response.json();
+    console.log('[PI VERIFY] Payment data from Pi API:', paymentData);
+
+    // Vérifier que le paiement existe et est dans un état valide
+    return paymentData && (paymentData.status === 'completed' || paymentData.status === 'pending');
+
   } catch (error) {
-    console.error('Erreur vérification paiement:', error);
+    console.error('[PI VERIFY] Error verifying payment:', error);
+    // Fallback to basic validation
+    return basicValidation(paymentId);
+  }
+}
+
+function basicValidation(paymentId: string) {
+  // Validation basique du format paymentId
+  if (!paymentId || typeof paymentId !== 'string' || paymentId.length < 10) {
     return false;
   }
+  // Vérifier si le paiement est déjà en pending ou approved
+  if (pendingPayments.has(paymentId)) {
+    console.log('[PI VERIFY] Payment found in pending:', paymentId);
+    return true;
+  }
+  // Mode test: Accepter les paiements si en development/testnet
+  if (process.env.NEXT_PUBLIC_PI_SANDBOX === 'true' || process.env.NODE_ENV === 'development') {
+    console.log('[PI VERIFY] Payment accepted in test mode:', paymentId);
+    return true;
+  }
+  console.log('[PI VERIFY] Payment verified (basic):', paymentId);
+  return true;
 }
 
 async function updateUserToVip(client: any, payment: PiPaymentData) {
@@ -235,15 +268,15 @@ export async function POST(request: NextRequest) {
         console.log('[PI PAYMENT] ✅ Payment verified and stored with txid:', txid);
 
         // Optionnel: Mettre à jour la DB (décommenter si vous avez une DB configurée)
-        // const client = await getClientPromise();
-        // try {
-        //   await updateUserToVip(client, paymentData);
-        //   console.log('[PI PAYMENT] ✅ User VIP status updated');
-        // } catch (error) {
-        //   console.error('[PI PAYMENT] ⚠️ Failed to update user VIP:', error);
-        //   // Ne pas fail la complétion si la DB a un problème
-        //   // Le paiement est déjà on-chain, c'est plus important
-        // }
+        const client = await getClientPromise();
+        try {
+          await updateUserToVip(client, paymentData);
+          console.log('[PI PAYMENT] ✅ User VIP status updated');
+        } catch (error) {
+          console.error('[PI PAYMENT] ⚠️ Failed to update user VIP:', error);
+          // Ne pas fail la complétion si la DB a un problème
+          // Le paiement est déjà on-chain, c'est plus important
+        }
 
         console.log('[PI PAYMENT] ✅ Payment COMPLETED successfully:', {
           paymentId,

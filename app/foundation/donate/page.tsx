@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function FoundationDonatePage() {
   const router = useRouter();
-  const { createPayment, isAuthenticated } = usePi();
+  const { createPayment, login, isAuthenticated } = usePi();
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState('');
@@ -16,16 +16,29 @@ export default function FoundationDonatePage() {
   const [isTransferring, setIsTransferring] = useState(false);
 
   const handlePiDonation = async () => {
-    if (!isAuthenticated) {
-      alert('Veuillez vous connecter avec Pi Network pour faire un don.');
+    if (typeof window === 'undefined' || !window.Pi) {
+      alert('Le SDK Pi Network n\'est pas disponible. Veuillez ouvrir l\'application Pi ou recharger la page.');
       return;
     }
+
+    if (!isAuthenticated) {
+      try {
+        await login();
+      } catch (error) {
+        console.error('Échec de l\'authentification Pi:', error);
+        alert('Connexion Pi annulée ou échouée. Veuillez réessayer.');
+        return;
+      }
+    }
+
     try {
       const payment = await createPayment(1, 'Don à la Fondation GlobalArtPro');
       console.log('Paiement Pi créé:', payment);
+      alert('Paiement Pi initié avec succès. Suivez les instructions de l\'interface Pi.');
       // Ici, vous pouvez ajouter la logique pour finaliser le paiement
     } catch (error) {
       console.error('Erreur lors du paiement Pi:', error);
+      alert('Impossible de lancer le paiement Pi. Vérifiez votre connexion Pi et réessayez.');
     }
   };
 

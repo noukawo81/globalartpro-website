@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { generateRewardHistory } from '@/lib/rewardEngine';
 import { usePi } from '@/context/PiContext';
+import { config } from '@/lib/config';
 import ARTCWalletCard from '@/components/wallet/ARTCWalletCard';
 
 // Types
@@ -42,9 +43,9 @@ const mockTransactions: Transaction[] = [
     id: '3',
     type: 'conversion',
     amount: 1,
-    currency: 'Pi',
+    currency: config.currency.name as 'ARTC' | 'Pi',
     date: '2024-01-13',
-    details: 'Conversion Pi → ARTC (1000 ARTC)'
+    details: `Conversion ${config.currency.name} → ARTC (1000 ARTC)`
   },
   {
     id: '4',
@@ -97,13 +98,13 @@ export default function WalletPage() {
     .filter((tx) => tx.type === 'gain' || tx.type === 'soutien')
     .reduce((acc, tx) => acc + tx.amount, 0);
 
-  const conversionRate = 1000; // 1 Pi = 1000 ARTC
+  const conversionRate = 1000; // 1 Test Pi = 1000 ARTC
 
   const handleConvert = () => {
     const amount = parseFloat(conversionAmount);
     if (amount > 0 && amount <= piBalance) {
       // Here you would integrate with actual conversion logic
-      alert(`Conversion de ${amount} Pi vers ${amount * conversionRate} ARTC effectuée !`);
+      alert(`Conversion de ${amount} ${config.currency.name} vers ${amount * conversionRate} ARTC effectuée !`);
       setShowConvertModal(false);
       setConversionAmount('');
     }
@@ -203,8 +204,8 @@ export default function WalletPage() {
                   <span className="text-2xl">π</span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-orange-300">Pi Network</h3>
-                  <p className="text-sm text-gray-400">Cryptomonnaie</p>
+                  <h3 className="text-xl font-semibold text-orange-300">{config.currency.name}</h3>
+                  <p className="text-sm text-gray-400">Cryptomonnaie de test</p>
                 </div>
               </div>
             </div>
@@ -222,7 +223,7 @@ export default function WalletPage() {
           className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-2xl mb-12"
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-orange-400">Connexion Pi Network</h3>
+            <h3 className="text-xl font-bold text-orange-400">Connexion {config.currency.name} Network</h3>
             {isAuthenticated ? (
               <div className="flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-lg">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -240,11 +241,11 @@ export default function WalletPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-lg">π</span>
+                  <span className="text-lg">{config.currency.symbol}</span>
                 </div>
                 <div>
                   <p className="text-white font-medium">{user?.username}</p>
-                  <p className="text-gray-400 text-sm">Utilisateur Pi Network</p>
+                  <p className="text-gray-400 text-sm">Utilisateur {config.currency.name}</p>
                 </div>
               </div>
 
@@ -252,10 +253,10 @@ export default function WalletPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => createPayment(1, 'Test payment GlobalArtpro')}
+                  onClick={() => createPayment(1, `Test payment ${config.currency.name}`)}
                   className="px-4 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-400 transition-all"
                 >
-                  Tester Paiement (1 π)
+                  Tester Paiement (1 {config.currency.symbol})
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}

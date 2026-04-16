@@ -12,6 +12,7 @@ const footerLinks = [
       { name: 'Explorer', href: '/explorer' },
       { name: 'Créer', href: '/create' },
       { name: 'Community', href: '/community' },
+      { name: 'Devenir Partenaire', href: '/partenariat' },
     ],
   },
   {
@@ -38,10 +39,10 @@ export default function Footer() {
   return (
     <footer className="bg-slate-950 border-t border-blue-500/10 text-gray-300">
       {/* Main Footer */}
-      <div className="px-6 py-16 sm:px-6 lg:px-8">
+      <div className="px-6 py-8 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Header Section */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-8">
             {/* Logo Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -49,17 +50,17 @@ export default function Footer() {
               transition={{ duration: 0.6 }}
               className="md:col-span-2"
             >
-              <Link href="/" className="flex items-center gap-2 mb-4">
+              <Link href="/" className="flex items-center gap-2 mb-3">
                 <Image
                   src="/logos/globalartpro.jpeg"
                   alt="GlobalArtpro"
-                  width={36}
-                  height={36}
-                  className="w-9 h-9"
+                  width={32}
+                  height={32}
+                  className="w-8 h-8"
                 />
-                <span className="text-white font-semibold text-lg">GlobalArtpro</span>
+                <span className="text-white font-semibold text-base">GlobalArtpro</span>
               </Link>
-              <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
+              <p className="text-gray-400 text-xs leading-relaxed max-w-xs">
                 La plateforme mondiale de l'art et des cultures. Créez, valorisez et vendez vos œuvres en NFT avec une communauté mondiale d'artistes.
               </p>
             </motion.div>
@@ -72,8 +73,8 @@ export default function Footer() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: (index + 1) * 0.1 }}
               >
-                <h3 className="text-white font-semibold mb-4 text-sm">{column.title}</h3>
-                <ul className="space-y-3">
+                <h3 className="text-white font-semibold mb-3 text-xs uppercase tracking-wider">{column.title}</h3>
+                <ul className="space-y-2">
                   {column.links.map((link) => (
                     <li key={link.name}>
                       <Link
@@ -90,9 +91,9 @@ export default function Footer() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-blue-500/10 pt-8">
+          <div className="border-t border-blue-500/10 pt-6">
             {/* Bottom Section */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               {/* Copyright */}
               <motion.p
                 initial={{ opacity: 0 }}

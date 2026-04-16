@@ -8,10 +8,10 @@ const options = {};
 let clientPromise: Promise<MongoClient> | undefined;
 
 function getMongoUri() {
-  if (!process.env.MONGODB_URI) {
+  if (!process.env.DATABASE_URL) {
     throw new Error('Please add your MongoDB URI to .env.local');
   }
-  return process.env.MONGODB_URI;
+  return process.env.DATABASE_URL;
 }
 
 function createClientPromise() {

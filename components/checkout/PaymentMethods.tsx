@@ -130,12 +130,12 @@ export function PiPaymentForm({ piAuthenticated, piBalance, itemPrice }: PiPayme
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-300">Montant requis</span>
-            <span className="text-white font-bold">{(itemPrice / 1000).toFixed(2)} π</span>
+            <span className="text-white font-bold">{config.formatPrice(Number((itemPrice / 1000).toFixed(2)))}</span>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-orange-500/20">
             <span className="text-gray-300">Solde restant</span>
             <span className={`font-bold ${(piBalance - itemPrice / 1000) >= 0 ? 'text-orange-400' : 'text-red-400'}`}>
-              {(piBalance - itemPrice / 1000).toFixed(2)} π
+              {config.formatPrice(Number((piBalance - itemPrice / 1000).toFixed(2)))}
             </span>
           </div>
         </div>

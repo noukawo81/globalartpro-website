@@ -1,0 +1,20 @@
+▲ Next.js 16.2.1 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.9min
+  Running TypeScript ...
+Failed to type check.
+
+./app/api/test-db/route.ts:22:9
+Type error: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+
+  [90m20 |[0m         [36mconst[0m collection = db.collection(collectionName);
+  [90m21 |[0m         [36mconst[0m count = [36mawait[0m collection.countDocuments();
+[31m[1m>[0m [90m22 |[0m         results[collectionName] = {
+  [90m   |[0m         [31m[1m^[0m
+  [90m23 |[0m           count,
+  [90m24 |[0m           status: [32m'success'[0m
+  [90m25 |[0m         };
+Next.js build worker exited with code: 1 and signal: null

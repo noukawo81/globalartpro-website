@@ -13,6 +13,7 @@ import PaymentMethods, {
   ArtcPaymentForm,
   PiPaymentForm,
 } from '@/components/checkout/PaymentMethods';
+import { config } from '@/lib/config';
 
 // Types
 interface CheckoutItem {
@@ -42,9 +43,9 @@ const paymentMethods: PaymentMethod[] = [
   },
   {
     id: 'pi',
-    name: 'Pi Network',
-    icon: 'π',
-    description: 'Cryptomonnaie Pi',
+    name: config.currency.name + ' Network',
+    icon: config.currency.symbol,
+    description: 'Cryptomonnaie ' + config.currency.name,
     available: true,
   },
 ];

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { usePi } from '@/context/PiContext';
 import ReferralCard from '@/components/referral/ReferralCard';
+import { config } from '@/lib/config';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -203,7 +204,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Info Pi Network */}
+      {/* Info Test Pi Network */}
       <section className="py-12 px-4 sm:px-6 bg-slate-900/30">
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -211,11 +212,11 @@ export default function Dashboard() {
             className="bg-gradient-to-r from-blue-600/20 to-blue-600/5 border border-blue-500/30 rounded-lg p-8"
           >
             <div className="flex items-start gap-4">
-              <div className="text-5xl">π</div>
+              <div className="text-5xl">{config.currency.symbol}</div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold mb-2">Pi Network</h3>
+                <h3 className="text-2xl font-bold mb-2">{config.currency.name} Network</h3>
                 <p className="text-gray-400 mb-4">
-                  Utilisez Pi Network pour des paiements sécurisés et des revenus en crypto-monnaie.
+                  Utilisez {config.currency.name} Network pour des paiements sécurisés et des revenus en crypto-monnaie.
                 </p>
                 {piUser ? (
                   <div className="text-green-400 font-semibold">
@@ -227,7 +228,7 @@ export default function Dashboard() {
                     disabled={isLoading}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-all disabled:opacity-50"
                   >
-                    {isLoading ? 'Connexion...' : 'Accéder à Pi Network'}
+                    {isLoading ? 'Connexion...' : `Accéder à ${config.currency.name} Network`}
                     <span>→</span>
                   </button>
                 )}
