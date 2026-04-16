@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getClientPromise } from '@/lib/mongodb';
 
+interface CollectionResult {
+  count?: number;
+  status: 'success' | 'error';
+  sample?: any;
+  error?: string;
+}
+
 export async function GET() {
   try {
     console.log('🔄 Test de connexion MongoDB via API...');
@@ -12,7 +19,7 @@ export async function GET() {
     const collections = await db.collections();
     const collectionNames = collections.map(c => c.collectionName);
 
-    const results = {};
+    const results: Record<string, CollectionResult> = {};
 
     // Tester quelques collections importantes
     for (const collectionName of ['users', 'payments', 'artworks']) {
@@ -31,7 +38,7 @@ export async function GET() {
       } catch (error) {
         results[collectionName] = {
           status: 'error',
-          error: error.message
+          error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
     }
@@ -47,8 +54,8 @@ export async function GET() {
     console.error('❌ Erreur MongoDB:', error);
     return NextResponse.json({
       success: false,
-      error: error.message,
-      stack: error.stack
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }

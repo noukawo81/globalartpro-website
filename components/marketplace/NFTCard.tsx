@@ -289,7 +289,7 @@ export default function NFTCard({ nft }: NFTCardProps) {
               <div className="space-y-1">
                 <p className="text-xs text-gray-400">Prix</p>
                 <p className="text-lg font-bold text-blue-300">
-                  {config.formatPrice(nft.price, nft.priceType === 'Pi' ? 'Pi' : 'ARTC')}
+                  {config.formatPrice(nft.price)}
                 </p>
               </div>
 

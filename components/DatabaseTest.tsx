@@ -2,8 +2,17 @@
 
 import { useState } from 'react';
 
+interface DatabaseResult {
+  success: boolean;
+  message?: string;
+  collections?: string[];
+  details?: Record<string, any>;
+  error?: string;
+  stack?: string;
+}
+
 export default function DatabaseTest() {
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<DatabaseResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const testDatabase = async () => {
@@ -13,7 +22,10 @@ export default function DatabaseTest() {
       const data = await response.json();
       setResult(data);
     } catch (error) {
-      setResult({ success: false, error: error.message });
+      setResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     } finally {
       setLoading(false);
     }
