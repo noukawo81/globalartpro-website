@@ -24,6 +24,7 @@ interface PiContextType {
   logout: () => void;
   rewardPiUser: (email: string, piUsername: string) => Promise<void>;
   createPayment: (amount: number, memo: string, metadata?: any) => Promise<any>;
+  waitForPiSDK: () => Promise<boolean>;
 }
 
 const PiContext = createContext<PiContextType | undefined>(undefined);
@@ -161,6 +162,54 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     localStorage.removeItem('pi_user');
     localStorage.removeItem('pi_access_token');
+  };
+
+  // Fonction pour attendre que le SDK Pi soit disponible
+  const waitForPiSDK = async (): Promise<boolean> => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    // Vérifier que le domaine est autorisé
+    if (!config.isDomainAllowed()) {
+      console.warn('[PI SDK] ❌ Domaine non autorisé pour Pi Network:', window.location.host);
+      return false;
+    }
+
+    // Si déjà disponible, retourner immédiatement
+    if (window.Pi) {
+      console.log('[PI SDK] ✅ SDK Pi détecté immédiatement');
+      return true;
+    }
+
+    // Attendre jusqu'à 10 secondes maximum
+    const maxWaitTime = 10000;
+    const checkInterval = 500; // Vérifier toutes les 500ms
+    const startTime = Date.now();
+
+    console.log('[PI SDK] ⏳ Attente du chargement du SDK Pi...');
+
+    return new Promise((resolve) => {
+      const checkSDK = () => {
+        if (window.Pi) {
+          console.log('[PI SDK] ✅ SDK Pi détecté après attente');
+          resolve(true);
+          return;
+        }
+
+        if (Date.now() - startTime > maxWaitTime) {
+          console.warn('[PI SDK] ⏰ Timeout: SDK Pi non détecté après 10 secondes');
+          resolve(false);
+          return;
+        }
+
+        // Relancer la vérification dans 500ms
+        setTimeout(checkSDK, checkInterval);
+      };
+
+      // Démarrer la vérification
+      checkSDK();
+    });
   };
 
   const createPayment = async (amount: number, memo: string, metadata: any = {}) => {
@@ -347,6 +396,7 @@ export function PiProvider({ children }: { children: React.ReactNode }) {
     logout,
     rewardPiUser,
     createPayment,
+    waitForPiSDK,
   };
 
   return (

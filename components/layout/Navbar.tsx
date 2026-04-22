@@ -42,18 +42,16 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isPiBrowser, setIsPiBrowser] = useState(false);
   const { user: authUser, isAuthenticated, logout: authLogout, isAdmin } = useAuth();
-  const { user: piUser, isLoading, login } = usePi();
+  const { user: piUser, isLoading, login, waitForPiSDK } = usePi();
 
-  // Détect Pi Browser
+  // Détect Pi Browser de manière asynchrone
   useEffect(() => {
-    const checkPiBrowser = () => {
-      setIsPiBrowser(typeof window !== 'undefined' && !!window.Pi);
+    const checkPiBrowser = async () => {
+      const sdkAvailable = await waitForPiSDK();
+      setIsPiBrowser(sdkAvailable);
     };
     checkPiBrowser();
-    // Re-check après un délai pour s'assurer que le SDK s'est chargé
-    const timer = setTimeout(checkPiBrowser, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  }, [waitForPiSDK]);
 
   // Détect scroll pour effect glassmorphism amélioré
   useEffect(() => {

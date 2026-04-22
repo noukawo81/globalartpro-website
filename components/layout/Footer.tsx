@@ -66,28 +66,33 @@ export default function Footer() {
             </motion.div>
 
             {/* Links Columns */}
-            {footerLinks.map((column, index) => (
-              <motion.div
-                key={column.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: (index + 1) * 0.1 }}
-              >
-                <h3 className="text-white font-semibold mb-3 text-xs uppercase tracking-wider">{column.title}</h3>
-                <ul className="space-y-2">
-                  {column.links.map((link) => (
-                    <li key={link.name}>
-                      <Link
-                        href={link.href}
-                        className="text-gray-400 hover:text-blue-400 transition-colors text-sm"
-                      >
-                        {link.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
+            <div className="grid grid-cols-3 gap-3">
+              {footerLinks.map((column, index) => (
+                <motion.div
+                  key={column.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: (index + 1) * 0.1 }}
+                  className="space-y-3"
+                >
+                  <h3 className="text-white font-semibold text-[10px] uppercase tracking-wider truncate leading-tight">
+                    {column.title}
+                  </h3>
+                  <ul className="space-y-2">
+                    {column.links.map((link) => (
+                      <li key={link.name}>
+                        <Link
+                          href={link.href}
+                          className="block text-gray-400 hover:text-blue-400 transition-colors text-[10px] leading-tight truncate"
+                        >
+                          {link.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
           {/* Divider */}

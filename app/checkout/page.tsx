@@ -53,7 +53,7 @@ const paymentMethods: PaymentMethod[] = [
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user: piUser, isAuthenticated: piAuthenticated } = usePi();
+  const { user: piUser, isAuthenticated: piAuthenticated, waitForPiSDK } = usePi();
   const { user: authUser, setSupporterStatus } = useAuth();
   const { processPayment, isProcessing } = usePayment();
 
@@ -139,10 +139,35 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Vérifier si le SDK Pi est disponible
-      if (typeof window === 'undefined' || !window.Pi) {
-        console.error('[CHECKOUT] ⚠️ Pi SDK not available');
-        setValidationErrors(['SDK Pi non disponible']);
+    // **SPECIAL HANDLING FOR PI PAYMENT**
+    if (selectedMethod === 'pi') {
+      console.log('[CHECKOUT] 🥧 Initiating Pi Network payment...');
+      
+      // Validation Pi - vérifier la connexion
+      if (!piAuthenticated) {
+        console.error('[CHECKOUT] ✋ User not authenticated with Pi');
+        setValidationErrors(['Connexion Pi Network requise - veuillez vous authentifier']);
+        setIsProcessing(false);
+        return;
+      }
+
+      // Attendre que le SDK Pi soit disponible avec timeout
+      console.log('[CHECKOUT] ⏳ Waiting for Pi SDK...');
+      const sdkAvailable = await waitForPiSDK();
+      
+      if (!sdkAvailable) {
+        console.error('[CHECKOUT] ⚠️ Pi SDK not available after waiting');
+        setValidationErrors(['⚠️ Pi SDK non disponible. Assurez-vous d\'utiliser le Pi Browser.']);
+        setIsProcessing(false);
+        return;
+      }
+
+      // Vérifier que window.Pi existe vraiment
+      const pi = (window as any).Pi;
+      if (!pi || typeof pi.createPayment !== 'function') {
+        console.error('[CHECKOUT] ❌ Pi SDK not fully initialized');
+        setValidationErrors(['❌ Erreur: SDK Pi non complètement initialisé. Veuillez rafraîchir la page.']);
+        setIsProcessing(false);
         return;
       }
 
@@ -161,46 +186,118 @@ export default function CheckoutPage() {
           timestamp: new Date().toISOString(),
         };
 
-        // **APPEL DIRECT AU CONTEXTE PI POUR CRÉER LE PAIEMENT**
-        // C'est le cœur du flux - cela déclenche le SDK Pi
-        const paymentResult = await window.Pi.createPayment(
+        console.log('[CHECKOUT] 📦 Payment metadata:', metadata);
+
+        // **APPEL AU SDK PI POUR CRÉER LE PAIEMENT**
+        const paymentResult = await pi.createPayment(
           {
-            amount: totalFinal / 1000, // Convertir ARTC à Pi (approximation)
-            memo: `Purchase: ${item.title}`,
+            amount: totalFinal,
+            memo: `Achat: ${item.title}`,
             metadata,
           },
           {
-            // Ces callbacks sont gérés par PiContext aussi, mais avoir la boucle ici aide
-            onReadyForServerApproval: (paymentId: string) => {
+            // Callbacks pour les états du paiement
+            onReadyForServerApproval: async (paymentId: string) => {
               console.log('[CHECKOUT] 📲 Payment ready for approval:', paymentId);
+              try {
+                const res = await fetch('/api/pi/payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'approve',
+                    paymentId,
+                    amount: totalFinal,
+                    memo: `Achat: ${item.title}`,
+                    itemId: item.id,
+                  }),
+                });
+                
+                if (!res.ok) {
+                  const errData = await res.text();
+                  console.error('[CHECKOUT] ❌ Server approval failed:', errData);
+                  throw new Error(`Erreur d'approbation serveur: ${res.status}`);
+                }
+                
+                const result = await res.json();
+                console.log('[CHECKOUT] ✅ Server approval confirmed:', result);
+                
+                if (result.signature && pi.completeServerApproval) {
+                  console.log('[CHECKOUT] 🔐 Sending server signature to Pi SDK...');
+                  await pi.completeServerApproval(paymentId, result.signature);
+                }
+              } catch (approvalError) {
+                console.error('[CHECKOUT] ❌ Approval error:', approvalError);
+                setValidationErrors([`Erreur d'approbation: ${approvalError instanceof Error ? approvalError.message : 'Erreur inconnue'}`]);
+              }
             },
-            onReadyForServerCompletion: (paymentId: string, txid: string) => {
-              console.log('[CHECKOUT] ✅ Payment completed:', { paymentId, txid });
-              setPaymentSuccessMessage('Paiement réussi! Redirection en cours...');
-              setTimeout(() => {
-                router.push(`/checkout/success?method=pi&amount=${totalFinal}&txid=${txid}`);
-              }, 1500);
+
+            onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+              console.log('[CHECKOUT] ✨ Payment ready for completion:', { paymentId, txid });
+              try {
+                const res = await fetch('/api/pi/payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'complete',
+                    paymentId,
+                    txid,
+                    amount: totalFinal,
+                    memo: `Achat: ${item.title}`,
+                    itemId: item.id,
+                  }),
+                });
+                
+                if (!res.ok) {
+                  const errData = await res.json();
+                  console.error('[CHECKOUT] ❌ Server completion failed:', errData);
+                  throw new Error(errData.error || `Erreur serveur: ${res.status}`);
+                }
+                
+                console.log('[CHECKOUT] ✅ Payment completed successfully!');
+                setPaymentSuccessMessage('✅ Paiement réussi! Redirection en cours...');
+                
+                // Traiter les données de donation/supporter
+                if (finalDonation > 0) {
+                  setSupporterStatus(true);
+                  setIsSupporter(true);
+                  setSupporterMessage('Merci pour votre contribution! 💛');
+                }
+                
+                // Redirection après un court délai
+                setTimeout(() => {
+                  router.push(`/checkout/success?method=pi&amount=${totalFinal}&txid=${txid}`);
+                }, 1500);
+              } catch (completionError) {
+                console.error('[CHECKOUT] ❌ Completion error:', completionError);
+                setValidationErrors([`Erreur de finalisation: ${completionError instanceof Error ? completionError.message : 'Erreur inconnue'}`]);
+              }
             },
+
             onCancel: (paymentId: string) => {
-              console.log('[CHECKOUT] ⚠️ Payment cancelled:', paymentId);
+              console.log('[CHECKOUT] ⚠️ Payment cancelled by user:', paymentId);
               setValidationErrors(['Paiement annulé par l\'utilisateur']);
+              setIsProcessing(false);
             },
-            onError: (error: any) => {
-              console.error('[CHECKOUT] ❌ Payment error:', error);
-              setValidationErrors([`Erreur: ${error?.message || 'Erreur de paiement'}`]);
+
+            onError: (error: any, paymentId?: string) => {
+              console.error('[CHECKOUT] ❌ Payment error:', error, paymentId);
+              const errorMsg = error?.message || 'Erreur inconnue';
+              setValidationErrors([`❌ Erreur de paiement: ${errorMsg}`]);
+              setIsProcessing(false);
             },
           }
         );
 
-        console.log('[CHECKOUT] 🎯 Payment created:', paymentResult);
+        console.log('[CHECKOUT] 🎯 Payment object created:', paymentResult);
         return;
       } catch (error) {
         console.error('[CHECKOUT] ❌ Error initiating Pi payment:', error);
-        setValidationErrors([
-          error instanceof Error ? error.message : 'Erreur lors de l\'initiation du paiement Pi'
-        ]);
+        const errorMsg = error instanceof Error ? error.message : 'Erreur lors de l\'initiation du paiement Pi';
+        setValidationErrors([`❌ ${errorMsg}`]);
+        setIsProcessing(false);
         return;
       }
+    }
     }
 
     // **VALIDATION POUR ARTC**

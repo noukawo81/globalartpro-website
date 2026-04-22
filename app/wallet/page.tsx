@@ -68,12 +68,16 @@ const mockTransactions: Transaction[] = [
 export default function WalletPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
-  const { user: piUser, createPayment } = usePi();
+  const { user: piUser, waitForPiSDK, isAuthenticated: piAuthenticated, login } = usePi();
   const [conversionAmount, setConversionAmount] = useState('');
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [artcBalance] = useState(2500);
   const [piBalance] = useState(2.5);
   const [transactions] = useState(mockTransactions);
+  const [isTestingPayment, setIsTestingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [selectedSpendMethod, setSelectedSpendMethod] = useState<'pi' | 'artc' | null>(null);
+  const [isSpending, setIsSpending] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -84,6 +88,159 @@ export default function WalletPage() {
   if (!isAuthenticated) {
     return null;
   }
+
+  const handleTestPayment = async () => {
+    console.log('[WALLET] 🥧 Initiating test Pi payment...');
+    setPaymentError('');
+    setIsTestingPayment(true);
+
+    try {
+      // Attendre le SDK Pi
+      console.log('[WALLET] ⏳ Waiting for Pi SDK...');
+      const sdkAvailable = await waitForPiSDK();
+
+      if (!sdkAvailable) {
+        console.warn('[WALLET] ⚠️ Pi SDK not available');
+        setPaymentError('⚠️ Pi SDK non disponible. Assurez-vous d\'utiliser le Pi Browser.');
+        setIsTestingPayment(false);
+        return;
+      }
+
+      const pi = (window as any).Pi;
+      if (!pi) {
+        console.error('[WALLET] ❌ Pi SDK not available');
+        setPaymentError('❌ Erreur: SDK Pi non disponible. Veuillez rafraîchir la page.');
+        setIsTestingPayment(false);
+        return;
+      }
+
+      // Authentifier si nécessaire
+      if (!piAuthenticated) {
+        console.log('[WALLET] 🔐 Authenticating with Pi...');
+        try {
+          await login();
+        } catch (authError) {
+          console.error('[WALLET] ❌ Authentication failed:', authError);
+          setPaymentError('❌ Authentification Pi échouée. Veuillez réessayer.');
+          setIsTestingPayment(false);
+          return;
+        }
+      }
+
+      console.log('[WALLET] 🚀 Creating test payment...');
+
+      // Créer le paiement de test
+      const payment = await pi.createPayment(
+        {
+          amount: 1,
+          memo: 'Test payment - Wallet',
+          metadata: {
+            type: 'test-payment',
+            timestamp: new Date().toISOString(),
+          },
+        },
+        {
+          onReadyForServerApproval: async (paymentId: string) => {
+            console.log('[WALLET] 📲 Payment ready for approval:', paymentId);
+            try {
+              const res = await fetch('/api/pi/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'approve',
+                  paymentId,
+                  amount: 1,
+                  memo: 'Test payment - Wallet',
+                }),
+              });
+
+              if (!res.ok) {
+                const errData = await res.text();
+                console.error('[WALLET] ❌ Server approval failed:', errData);
+                throw new Error(`Erreur d'approbation: ${res.status}`);
+              }
+
+              const result = await res.json();
+              console.log('[WALLET] ✅ Server approval confirmed:', result);
+
+              if (result.signature && pi.completeServerApproval) {
+                console.log('[WALLET] 🔐 Sending server signature...');
+                pi.completeServerApproval(paymentId, result.signature);
+              }
+            } catch (approvalError) {
+              console.error('[WALLET] ❌ Approval error:', approvalError);
+              setPaymentError(`Erreur d'approbation: ${approvalError instanceof Error ? approvalError.message : 'Erreur inconnue'}`);
+            }
+          },
+
+          onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+            console.log('[WALLET] ✨ Payment ready for completion:', { paymentId, txid });
+            try {
+              const res = await fetch('/api/pi/payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'complete',
+                  paymentId,
+                  txid,
+                  amount: 1,
+                  memo: 'Test payment - Wallet',
+                }),
+              });
+
+              if (!res.ok) {
+                const errData = await res.json();
+                console.error('[WALLET] ❌ Server completion failed:', errData);
+                throw new Error(errData.error || `Erreur serveur: ${res.status}`);
+              }
+
+              console.log('[WALLET] ✅ Test payment completed successfully!');
+              alert('✅ Test de paiement réussi!\nPayment ID: ' + paymentId);
+              setIsTestingPayment(false);
+            } catch (completionError) {
+              console.error('[WALLET] ❌ Completion error:', completionError);
+              setPaymentError(`Erreur de finalisation: ${completionError instanceof Error ? completionError.message : 'Erreur inconnue'}`);
+            }
+          },
+
+          onCancel: (paymentId: string) => {
+            console.log('[WALLET] ⚠️ Payment cancelled:', paymentId);
+            setPaymentError('Test de paiement annulé par l\'utilisateur');
+            setIsTestingPayment(false);
+          },
+
+          onError: (error: any, paymentId?: string) => {
+            console.error('[WALLET] ❌ Payment error:', error, paymentId);
+            const errorMsg = error?.message || 'Erreur inconnue';
+            setPaymentError(`❌ Erreur de paiement: ${errorMsg}`);
+            setIsTestingPayment(false);
+          },
+        }
+      );
+
+      console.log('[WALLET] 🎯 Payment object created:', payment);
+    } catch (error) {
+      console.error('[WALLET] ❌ Error initiating test payment:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Erreur lors de l\'initiation du paiement Pi';
+      setPaymentError(`❌ ${errorMsg}`);
+      setIsTestingPayment(false);
+    }
+  };
+
+  const handleSpendClick = async (method: 'pi' | 'artc') => {
+    console.log('[WALLET] 💳 Spend action selected:', method);
+    
+    if (method === 'pi') {
+      // Déclencher directement le paiement pour Pi
+      setSelectedSpendMethod('pi');
+      await handleTestPayment();
+    } else {
+      // Pour ARTC, afficher une modale ou traiter le paiement
+      setSelectedSpendMethod('artc');
+      alert('Fonctionnalité Dépenser ARTC à venir');
+      setSelectedSpendMethod(null);
+    }
+  };
 
   const rewardHistory = generateRewardHistory(8);
   const rewardTotal = rewardHistory.reduce((sum, r) => sum + r.amount, 0);
@@ -253,10 +410,22 @@ export default function WalletPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => createPayment(1, `Test payment ${config.currency.name}`)}
-                  className="px-4 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-400 transition-all"
+                  disabled={isTestingPayment}
+                  onClick={handleTestPayment}
+                  className="px-4 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                 >
-                  Tester Paiement (1 {config.currency.symbol})
+                  {isTestingPayment ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                      />
+                      <span>Test en cours...</span>
+                    </>
+                  ) : (
+                    <span>Tester Paiement (1 {config.currency.symbol})</span>
+                  )}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -267,6 +436,16 @@ export default function WalletPage() {
                   Convertir Pi → ARTC
                 </motion.button>
               </div>
+
+              {paymentError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-300 text-sm"
+                >
+                  {paymentError}
+                </motion.div>
+              )}
             </div>
           ) : (
             <p className="text-gray-300">
@@ -356,6 +535,94 @@ export default function WalletPage() {
             </div>
           </motion.button>
 
+          <motion.button
+            whileHover={{ scale: 1.05, y: -5 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-slate-900/90 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/80 shadow-2xl hover:bg-slate-800/90 transition-all group"
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">💸</span>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Dépenser</h3>
+              <p className="text-gray-400 text-sm">Actions rapides</p>
+            </div>
+          </motion.button>
+        </motion.div>
+
+        {/* Actions Rapides - Dépenser */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="bg-slate-900/90 backdrop-blur-lg rounded-2xl p-8 border border-slate-700/80 shadow-2xl mb-12"
+        >
+          <h3 className="text-2xl font-bold text-amber-300 mb-6">Actions Rapides - Dépenser</h3>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Paiement en Test Pi Network */}
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="bg-slate-800/50 rounded-xl p-6 border border-orange-500/30 hover:border-orange-500/60 transition-all"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h4 className="text-lg font-semibold text-orange-300 mb-1">Paiement Test {config.currency.name}</h4>
+                  <p className="text-sm text-gray-400">Montant: 1 {config.currency.symbol}</p>
+                </div>
+                <span className="text-2xl">π</span>
+              </div>
+              <p className="text-gray-300 text-sm mb-4">
+                Testez le système de paiement avec 1 Test {config.currency.name}. Parfait pour vérifier votre configuration.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={isSpending || isTestingPayment}
+                onClick={() => handleSpendClick('pi')}
+                className="w-full px-4 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {isTestingPayment ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                    />
+                    Traitement...
+                  </div>
+                ) : (
+                  'Effectuer le paiement'
+                )}
+              </motion.button>
+            </motion.div>
+
+            {/* Paiement en ARTC */}
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="bg-slate-800/50 rounded-xl p-6 border border-amber-500/30 hover:border-amber-500/60 transition-all"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h4 className="text-lg font-semibold text-amber-300 mb-1">Paiement en ARTC</h4>
+                  <p className="text-sm text-gray-400">Solde: {artcBalance.toLocaleString()} ARTC</p>
+                </div>
+                <span className="text-2xl">🎨</span>
+              </div>
+              <p className="text-gray-300 text-sm mb-4">
+                Dépensez vos ARTC pour des NFTs, des services ou des contributions à la plateforme.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={artcBalance <= 0 || isSpending}
+                onClick={() => handleSpendClick('artc')}
+                className="w-full px-4 py-2 bg-amber-500 text-slate-950 font-medium rounded-lg hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Dépenser des ARTC
+              </motion.button>
+            </motion.div>
+          </div>
         </motion.div>
 
         {/* Transaction History */}

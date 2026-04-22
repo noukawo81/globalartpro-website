@@ -2,9 +2,16 @@ export const config = {
   isDevelopment: process.env.NEXT_PUBLIC_APP_ENV === 'development',
   isProduction: process.env.NODE_ENV === 'production',
   pi: {
-    appId: process.env.NEXT_PUBLIC_PI_APP_ID || 'globalartproadac3428',
+    appId: process.env.NEXT_PUBLIC_PI_APP_ID || 'globalartpro7927',
     sandbox: process.env.NEXT_PUBLIC_PI_SANDBOX === 'true',
     version: '2.0' as const,
+    allowedDomains: [
+      'localhost:3000',
+      'globalartpro7927.pinet.com',
+      'globalartpro.vercel.app',
+      'globalartpro.com',
+      'www.globalartpro.com'
+    ],
   },
   currency: {
     name: process.env.NEXT_PUBLIC_CURRENCY_NAME || 'Test Pi',
@@ -22,6 +29,13 @@ export const config = {
     return this.currency.isTest
       ? '🧪 Mode testnet - Utilisez Test Pi gratuit pour les tests'
       : '';
+  },
+  isDomainAllowed(): boolean {
+    if (typeof window === 'undefined') return true;
+    const currentDomain = window.location.host;
+    return this.pi.allowedDomains.some(domain => 
+      currentDomain === domain || currentDomain.endsWith('.' + domain)
+    );
   },
 };
 

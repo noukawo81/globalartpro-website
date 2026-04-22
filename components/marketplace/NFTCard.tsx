@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { NFTItem } from '@/lib/mockNFTs';
 import { config } from '@/lib/config';
+import { usePi } from '@/context/PiContext';
 
 const PAYMENT_OPTIONS = [
   { label: `Payer en ${config.currency.name}`, method: 'Pi' },
@@ -20,6 +21,7 @@ interface NFTCardProps {
 export default function NFTCard({ nft }: NFTCardProps) {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { waitForPiSDK } = usePi();
 
   const handleArtistClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,115 +31,37 @@ export default function NFTCard({ nft }: NFTCardProps) {
 
   const handleBuy = async (paymentMethod: typeof PAYMENT_OPTIONS[number]['method']) => {
     setIsDropdownOpen(false);
-    
+
     try {
       if (paymentMethod === 'Pi') {
+        console.log('[NFT] 🥧 Initiating Pi payment for:', nft.title);
+
+        // Vérifier que le SDK Pi est disponible
+        const sdkAvailable = await waitForPiSDK();
+        if (!sdkAvailable) {
+          console.warn('[NFT] ⚠️ Pi SDK not available, continuing with limited support');
+          alert('⚠️ Pi SDK not fully available. Payment may not work. Make sure you are in Pi Browser.');
+        }
+
         const pi = (window as any).Pi;
-        const isPiBrowser = /PiBrowser/i.test(navigator.userAgent);
-        
-        // Check if in Pi Browser
-        if (!isPiBrowser || !pi) {
-          console.warn('Not in Pi Browser, using test mode payment');
-          
-          // Mode test: Simulate payment for development
-          if (config.pi.sandbox) {
-            alert('🧪 Mode Test - Simulation de paiement Pi en cours...');
-            
-            // Generate test payment ID
-            const testPaymentId = `test_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-            const testTxId = `test_tx_${Date.now()}`;
-            
-            try {
-              // Call approval endpoint
-              const approveRes = await fetch('/api/pi/payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  action: 'approve',
-                  paymentId: testPaymentId,
-                  amount: nft.price,
-                  memo: `Achat de ${nft.title}`,
-                })
-              });
-              
-              if (!approveRes.ok) {
-                throw new Error(`Erreur lors de l'approbation: ${approveRes.status}`);
-              }
-              
-              console.log('✅ Approval accepted in test mode');
-              
-              // Call completion endpoint
-              const completeRes = await fetch('/api/pi/payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  action: 'complete',
-                  paymentId: testPaymentId,
-                  txid: testTxId,
-                  amount: nft.price,
-                  memo: `Achat de ${nft.title}`,
-                })
-              });
-              
-              if (!completeRes.ok) {
-                const err = await completeRes.json();
-                throw new Error(err.error || `Erreur serveur: ${completeRes.status}`);
-              }
-              
-              const result = await completeRes.json();
-              console.log('✅ Payment completed in test mode:', result);
-              alert(`✅ Paiement test réussi!\n\nID Paiement: ${testPaymentId}\nTx ID: ${testTxId}\n\nMontant: ${nft.price} ${config.currency.symbol}`);
-              router.push('/marketplace');
-              return;
-            } catch (err) {
-              console.error('Test payment error:', err);
-              alert(`❌ Erreur paiement test: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
-              return;
-            }
-          } else {
-            alert('⚠️ Paiement Pi requiert le Pi Browser officiel.\n\n1. Téléchargez l\'application Pi Network\n2. Ouvrez cette page dans le Pi Browser intégré\n3. Cliquez de nouveau sur "Payer"');
-            return;
-          }
-        }
-
-        console.log('Initiating Pi payment for:', nft.title, nft.price);
-        
-        // Ensure Pi is initialized with correct scopes
-        try {
-          await pi.init({
-            version: '2.0',
-            sandbox: config.pi.sandbox,
-            appId: config.pi.appId,
-          });
-          console.log('Pi initialized');
-        } catch (initErr) {
-          console.warn('Pi init warning (may be already initialized):', initErr);
-        }
-
-        // Authenticate with payments scope
-        try {
-          console.log('Authenticating with payments scope...');
-          const auth = await pi.authenticate(['payments']);
-          console.log('Authentication successful:', auth);
-        } catch (authErr) {
-          console.error('Pi authentication error:', authErr);
-          alert('Erreur d\'authentification Pi. Assurez-vous d\'être dans le Pi Browser.');
+        if (!pi) {
+          console.error('[NFT] ❌ Pi SDK not available after waiting');
+          alert('❌ Erreur: SDK Pi non disponible. Veuillez vérifier que vous utilisez le Pi Browser.');
           return;
         }
 
-        // Alert for debugging
-        alert('Tentative de paiement Pi lancée !');
+        console.log('[NFT] ✅ Pi SDK is ready, creating payment...');
 
-        // Create payment
+        // Créer le paiement via le SDK Pi directement
         const payment = await pi.createPayment(
           {
             amount: nft.price,
-            memo: `Achat de ${nft.title}`,
+            memo: `Achat NFT: ${nft.title}`,
             metadata: { nftId: nft.id, title: nft.title },
           },
           {
             onReadyForServerApproval: async (paymentId: string) => {
-              console.log('Payment ready for approval:', paymentId);
+              console.log('[NFT] 📲 Payment ready for approval:', paymentId);
               try {
                 const res = await fetch('/api/pi/payment', {
                   method: 'POST',
@@ -146,19 +70,30 @@ export default function NFTCard({ nft }: NFTCardProps) {
                     action: 'approve',
                     paymentId,
                     amount: nft.price,
-                    memo: `Achat de ${nft.title}`,
-                  })
+                    memo: `Achat NFT: ${nft.title}`,
+                  }),
                 });
                 if (!res.ok) {
-                  throw new Error(`Erreur serveur: ${res.status}`);
+                  const errData = await res.text();
+                  throw new Error(`Erreur serveur (${res.status}): ${errData}`);
                 }
-                console.log('Server approval confirmed');
+                const result = await res.json();
+                console.log('[NFT] ✅ Server approval confirmed:', result);
+                
+                // Compléter l'approbation avec la signature du serveur
+                if (result.signature && pi.completeServerApproval) {
+                  console.log('[NFT] 🔐 Sending server signature to Pi SDK...');
+                  pi.completeServerApproval(paymentId, result.signature);
+                } else {
+                  console.warn('[NFT] ⚠️ No signature returned from server');
+                }
               } catch (err) {
-                console.error('Error sending approval:', err);
+                console.error('[NFT] ❌ Error in approval:', err);
+                alert(`❌ Erreur lors de l'approbation: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
               }
             },
             onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-              console.log('Payment ready for completion:', paymentId, txid);
+              console.log('[NFT] ✨ Payment ready for completion:', { paymentId, txid });
               try {
                 const res = await fetch('/api/pi/payment', {
                   method: 'POST',
@@ -168,37 +103,42 @@ export default function NFTCard({ nft }: NFTCardProps) {
                     paymentId,
                     txid,
                     amount: nft.price,
-                    memo: `Achat de ${nft.title}`,
-                  })
+                    memo: `Achat NFT: ${nft.title}`,
+                  }),
                 });
                 if (!res.ok) {
                   const err = await res.json();
                   throw new Error(err.error || `Erreur serveur: ${res.status}`);
                 }
-                alert(`Paiement complété! ID: ${paymentId}`);
+                const result = await res.json();
+                console.log('[NFT] ✅ Payment completed successfully!', result);
+                alert(`✅ Paiement réussi!\nPayment ID: ${paymentId}\nTransaction: ${txid}`);
+                router.push(`/explorer/${nft.id}?purchased=true`);
               } catch (err) {
-                console.error('Error completing payment:', err);
-                alert(`Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+                console.error('[NFT] ❌ Error completing payment:', err);
+                alert(`❌ Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
               }
             },
             onCancel: (paymentId: string) => {
-              console.log('Payment cancelled:', paymentId);
-              alert('Achat annulé.');
+              console.log('[NFT] ⚠️ Payment cancelled by user:', paymentId);
+              alert('⚠️ Achat annulé.');
             },
             onError: (error: any) => {
-              console.error('Payment error:', error);
-              alert(`Erreur de paiement: ${error?.message || 'Erreur inconnue'}`);
+              console.error('[NFT] ❌ Payment error:', error);
+              alert(`❌ Erreur de paiement: ${error?.message || 'Erreur inconnue'}`);
             },
           }
         );
-        
-        console.log('Payment created:', payment);
-      } else if (paymentMethod === 'ARTC') {
-        // TODO: Implement ARTC transfer logic
+
+        console.log('[NFT] 🎯 Payment object created:', payment);
+        return;
+      }
+
+      if (paymentMethod === 'ARTC') {
         alert(`Achat de ${nft.title} via ARTC. Prix: ${nft.price} ARTC. (À implémenter)`);
       }
     } catch (error) {
-      console.error('handleBuy error:', error);
+      console.error('[NFT] ❌ handleBuy error:', error);
       alert(`Erreur lors de l'achat: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   };

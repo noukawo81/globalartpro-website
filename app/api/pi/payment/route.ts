@@ -18,7 +18,7 @@ const pendingPayments = new Map<string, PiPaymentData>();
 
 function getCorsHeaders(request: NextRequest) {
   const origin = request.headers.get('origin') || '';
-  const allowedOrigins = ['https://www.globalartpro.com', 'https://globalartproadac3428.pinet.com'];
+  const allowedOrigins = ['https://www.globalartpro.com', 'https://globalartpro7927.pinet.com', 'http://localhost:3000'];
   const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
   return {
     'Access-Control-Allow-Origin': allowedOrigin,

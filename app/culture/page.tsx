@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { config } from '@/lib/config';
+import { isPiBrowser } from '@/lib/piPayment';
 
 // Types
 interface Publication {
@@ -484,8 +485,9 @@ const VipSalon = () => {
   };
 
   const isPiBrowserAvailable = () => {
+    // Vérifier que le SDK Pi est disponible (plus flexible pour les tests)
     if (typeof window === 'undefined') return false;
-    return Boolean((window as any).Pi) && /PiBrowser/i.test(navigator.userAgent);
+    return isPiBrowser();
   };
 
   const authenticateWithPi = async () => {
@@ -520,34 +522,38 @@ const VipSalon = () => {
   }, []);
 
   const handleVipAccess = async () => {
-    console.log('Clic Sanctuaire détecté');
+    console.log('🏛️ Accès Sanctuaire VIP détecté');
     setPaymentError('');
     setIsAccessing(true);
 
     try {
-      if (typeof window === 'undefined' || !isPiBrowserAvailable()) {
-        throw new Error(`⚠️ Accès limité: Le paiement en ${config.currency.name} nécessite le Pi Browser. 
-        
-Veuillez:
-1. Installer l'application Pi Network officielle
-2. Ouvrir cette page dans le Pi Browser intégré
-3. Cliquer de nouveau sur "Accéder au Sanctuaire VIP"
-
-Le ${config.currency.name} n'est disponible que dans le Pi Browser.`);
+      if (typeof window === 'undefined') {
+        throw new Error('Pi SDK non disponible côté serveur');
+      }
+      
+      if (!isPiBrowserAvailable()) {
+        console.warn('[VIP] Pi SDK not detected yet, but continuing...');
       }
 
-      const currentOrigin = getCurrentOrigin();
-      const expectedOrigin = process.env.NEXT_PUBLIC_PI_APP_URL;
-      if (expectedOrigin && expectedOrigin !== currentOrigin) {
-        throw new Error(`URL incorrecte. Domaine actuel: ${currentOrigin}, attendu: ${expectedOrigin}`);
+      const pi = (window as any).Pi;
+      if (!pi) {
+        // Attendre le SDK Pi avec un timeout
+        console.log('[VIP] Pi SDK not ready, waiting...');
+        let waited = 0;
+        while (!window.Pi && waited < 5000) {
+          await new Promise(r => setTimeout(r, 100));
+          waited += 100;
+        }
+        if (!window.Pi) {
+          throw new Error('Pi SDK timeout - SDK Pi non chargé après 5 secondes');
+        }
       }
 
       console.log('[VIP] Authenticating with Pi...');
       await authenticateWithPi();
       console.log('[VIP] Authentication successful, initiating payment...');
 
-      const pi = (window as any).Pi;
-      await pi.createPayment({
+      await window.Pi.createPayment({
         amount: piCost,
         memo: 'Offrande pour le Sanctuaire VIP',
         onReadyForServerApproval: async ({ paymentId }: { paymentId: string }) => {
