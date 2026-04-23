@@ -61,7 +61,7 @@ export default function FoundationPage() {
           <motion.h1 
             className="text-5xl md:text-8xl font-serif italic mb-6 bg-gradient-to-b from-white via-white to-gray-500 bg-clip-text text-transparent"
           >
-            Fondation Humanité
+            Fondation GlobalArtPro
           </motion.h1>
 
           <p className="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-light leading-relaxed">

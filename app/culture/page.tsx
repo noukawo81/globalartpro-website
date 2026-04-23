@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { config } from '@/lib/config';
-import { isPiBrowser } from '@/lib/piPayment';
 
 // Types
 interface Publication {
@@ -487,7 +486,7 @@ const VipSalon = () => {
   const isPiBrowserAvailable = () => {
     // Vérifier que le SDK Pi est disponible (plus flexible pour les tests)
     if (typeof window === 'undefined') return false;
-    return isPiBrowser();
+    return Boolean((window as any).Pi);
   };
 
   const authenticateWithPi = async () => {

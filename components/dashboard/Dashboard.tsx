@@ -37,7 +37,7 @@ export default function Dashboard() {
           >
             <h1 className="text-4xl sm:text-5xl font-bold mb-2">
               Bienvenue, {piUser?.username || user?.username || 'Artiste'} 
-            </h1>
+            </h1> 
             <p className="text-gray-400">Accédez à votre espace de création et de monétisation</p>
           </motion.div>
         </div>
@@ -77,7 +77,7 @@ export default function Dashboard() {
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-4">
                 <Image
-                  src="/logos/artc.svg"
+                  src="/logos/artc.png"
                   alt="ARTC Token"
                   width={48}
                   height={48}

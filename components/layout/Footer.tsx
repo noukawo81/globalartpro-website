@@ -52,7 +52,7 @@ export default function Footer() {
             >
               <Link href="/" className="flex items-center gap-2 mb-3">
                 <Image
-                  src="/logos/globalartpro.jpeg"
+                  src="/logos/globalartpro.png"
                   alt="GlobalArtpro"
                   width={32}
                   height={32}

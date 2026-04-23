@@ -23,7 +23,7 @@ export default function LandingPage() {
             className="mb-6 flex justify-center"
           >
             <Image
-              src="/logos/globalartpro.jpeg"
+              src="/logos/globalartpro.png"
               alt="GlobalArtpro"
               width={120}
               height={120}

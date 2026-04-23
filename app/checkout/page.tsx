@@ -69,6 +69,7 @@ export default function CheckoutPage() {
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod['id']>('artc');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [isProcessingPi, setIsProcessingPi] = useState(false);
 
   const [donationOption, setDonationOption] = useState<'none' | '1' | '2' | '5' | 'custom'>('none');
   const [customDonation, setCustomDonation] = useState('');
@@ -147,7 +148,7 @@ export default function CheckoutPage() {
       if (!piAuthenticated) {
         console.error('[CHECKOUT] ✋ User not authenticated with Pi');
         setValidationErrors(['Connexion Pi Network requise - veuillez vous authentifier']);
-        setIsProcessing(false);
+        setIsProcessingPi(false);
         return;
       }
 
@@ -158,7 +159,7 @@ export default function CheckoutPage() {
       if (!sdkAvailable) {
         console.error('[CHECKOUT] ⚠️ Pi SDK not available after waiting');
         setValidationErrors(['⚠️ Pi SDK non disponible. Assurez-vous d\'utiliser le Pi Browser.']);
-        setIsProcessing(false);
+        setIsProcessingPi(false);
         return;
       }
 
@@ -167,7 +168,7 @@ export default function CheckoutPage() {
       if (!pi || typeof pi.createPayment !== 'function') {
         console.error('[CHECKOUT] ❌ Pi SDK not fully initialized');
         setValidationErrors(['❌ Erreur: SDK Pi non complètement initialisé. Veuillez rafraîchir la page.']);
-        setIsProcessing(false);
+        setIsProcessingPi(false);
         return;
       }
 
@@ -276,14 +277,14 @@ export default function CheckoutPage() {
             onCancel: (paymentId: string) => {
               console.log('[CHECKOUT] ⚠️ Payment cancelled by user:', paymentId);
               setValidationErrors(['Paiement annulé par l\'utilisateur']);
-              setIsProcessing(false);
+              setIsProcessingPi(false);
             },
 
             onError: (error: any, paymentId?: string) => {
               console.error('[CHECKOUT] ❌ Payment error:', error, paymentId);
               const errorMsg = error?.message || 'Erreur inconnue';
               setValidationErrors([`❌ Erreur de paiement: ${errorMsg}`]);
-              setIsProcessing(false);
+              setIsProcessingPi(false);
             },
           }
         );
@@ -294,7 +295,7 @@ export default function CheckoutPage() {
         console.error('[CHECKOUT] ❌ Error initiating Pi payment:', error);
         const errorMsg = error instanceof Error ? error.message : 'Erreur lors de l\'initiation du paiement Pi';
         setValidationErrors([`❌ ${errorMsg}`]);
-        setIsProcessing(false);
+        setIsProcessingPi(false);
         return;
       }
     }
@@ -536,10 +537,10 @@ export default function CheckoutPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handlePayment}
-              disabled={isProcessing || !canProceed()}
+              disabled={(selectedMethod === 'pi' ? isProcessingPi : isProcessing) || !canProceed()}
               className="w-full mt-6 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-xl hover:from-blue-500 hover:to-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
             >
-              {isProcessing ? (
+              {(selectedMethod === 'pi' ? isProcessingPi : isProcessing) ? (
                 <div className="flex items-center justify-center gap-3">
                   <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
                   Traitement...
